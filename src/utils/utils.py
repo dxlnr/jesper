@@ -17,52 +17,6 @@ MODEL_FOLDER = "models"
 MODEL_CONFIGS_FOLDER = "model_configs"
 PREDICTION_FILES_FOLDER = "prediction_files"
 
-
-def save_prediction(df, name):
-    try:
-        Path(PREDICTION_FILES_FOLDER).mkdir(exist_ok=True, parents=True)
-    except Exception as ex:
-        pass
-    df.to_csv(f"{PREDICTION_FILES_FOLDER}/{name}.csv", index=True)
-
-
-def save_model(model, name):
-    try:
-        Path(MODEL_FOLDER).mkdir(exist_ok=True, parents=True)
-    except Exception as ex:
-        pass
-    pd.to_pickle(model, f"{MODEL_FOLDER}/{name}.pkl")
-
-
-def load_model(name):
-    path = Path(f"{MODEL_FOLDER}/{name}.pkl")
-    if path.is_file():
-        model = pd.read_pickle(f"{MODEL_FOLDER}/{name}.pkl")
-    else:
-        model = False
-    return model
-
-
-def save_model_config(model_config, model_name):
-    try:
-        Path(MODEL_CONFIGS_FOLDER).mkdir(exist_ok=True, parents=True)
-    except Exception as ex:
-        pass
-    with open(f"{MODEL_CONFIGS_FOLDER}/{model_name}.json", 'w') as fp:
-        json.dump(model_config, fp)
-
-
-def load_model_config(model_name):
-    path_str = f"{MODEL_CONFIGS_FOLDER}/{model_name}.json"
-    path = Path(path_str)
-    if path.is_file():
-        with open(path_str, 'r') as fp:
-            model_config = json.load(fp)
-    else:
-        model_config = False
-    return model_config
-
-
 def get_biggest_change_features(corrs, n):
     all_eras = corrs.index.sort_values()
     h1_eras = all_eras[:len(all_eras) // 2]
