@@ -8,7 +8,10 @@ def main():
 
     df = scraper_to_statement(is_link)
     print(df)
-
+    # close_price, after_hours_price = stock_prices(is_link)
+    # print("\n")
+    # print(close_price)
+    # print(after_hours_price)
 
 if __name__ == "__main__":
     main()
