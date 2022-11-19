@@ -7,6 +7,8 @@ import requests
 # from selenium import webdriver
 # import chromedriver_binary
 
+from src.scraper.utils import convert_to_float
+
 
 def scraper_to_statement(link: str):
     r"""Scrape from link and convert to data frame.
@@ -47,5 +49,6 @@ def scraper_to_statement(link: str):
 
     df = pd.DataFrame(final[1:])
     df.columns = items
+    df = convert_to_float(df)
 
     return df
