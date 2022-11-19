@@ -29,7 +29,7 @@ def scraper_to_statement(link: str):
     # Pull data from link.
     page_response = requests.get(link, headers=headers, timeout=1000)
     # Structure raw data for parsing.
-    page_content = BeautifulSoup(page_response.content)
+    page_content = BeautifulSoup(page_response.content, features="lxml")
     # Filter for items we want
     features = page_content.find_all("div", class_="D(tbr)")
     # Create headers

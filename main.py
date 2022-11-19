@@ -1,45 +1,50 @@
 from src.scraper.yahoo_finance import scraper_to_statement
-from src.scraper.utils import convert_to_float
+from src.scraper.utils import convert_to_float, extract_ttm_value
+from src.valuation import return_table
 
 
 def main():
-    is_link = 'https://finance.yahoo.com/quote/AAPL/financials?p=AAPL'
-    bs_link = 'https://finance.yahoo.com/quote/AAPL/balance-sheet?p=AAPL'
-    cf_link = 'https://finance.yahoo.com/quote/AAPL/cash-flow?p=AAPL'
+    is_link = "https://finance.yahoo.com/quote/AAPL/financials?p=AAPL"
+    bs_link = "https://finance.yahoo.com/quote/AAPL/balance-sheet?p=AAPL"
+    cf_link = "https://finance.yahoo.com/quote/AAPL/cash-flow?p=AAPL"
 
     # Run scraping and return data frame.
     income_df = scraper_to_statement(is_link)
     balance_sheet_df = scraper_to_statement(bs_link)
     cashflow_df = scraper_to_statement(cf_link)
 
-    print("AAPL")
-    print("----")
+    print("\tAAPL")
+    print("\t")
+    print("Income Report: ")
     print(income_df)
     print("\n")
+    print("Balance Sheet: ")
     print(balance_sheet_df)
     print("\n")
+    print("Cashflow Report: ")
     print(cashflow_df)
 
-    # close_price, after_hours_price = stock_prices(is_link)
-    # print("\n")
-    # print(close_price)
-    # print(after_hours_price)
+    # Instantiate resulting table.
+    df = return_table()
 
-    # from src.scraper.utils import clean
-    # print("\n")
-    # ebit = clean(incomestatement,'incomeBeforeTax')
-    # depreciation = clean(cashflow, 'depreciation')
-    # capex = clean(cashflow,'capitalExpenditures')
-    # df = pd.concat([ebit, depreciation, capex], axis=1)
-    #
+    # # Pulling in the desired fields ebit, depreciation & capex
+    df.at[0, 'incomeBeforeTax'] = extract_ttm_value(income_df, 'EBIT')
+    df.at[0, 'depreciation'] = extract_ttm_value(income_df, 'Reconciled Depreciation')
+    df.at[0, 'capitalExpenditures'] = extract_ttm_value(cashflow_df, 'Capital Expenditure')
+
+    # Calculating Average Capital Expenditure.
+    cp_exp_row = cashflow_df[cashflow_df["Breakdown"] == "Capital Expenditure"]
+    mean_capex = cp_exp_row.iloc[:, 2:].mean(axis=1).astype(float)
+    df.at[0, 'Average Capex'] = mean_capex.iloc[0]
+
+    # Calculating Owners Earnings
+    earnings = df['incomeBeforeTax'] + df['depreciation'] - df['Average Capex']
+    df.at[0, 'Owners Earnings'] = earnings.iloc[0]
+
+    # Show results.
     print("\n")
-    test = cashflow_df[cashflow_df['Breakdown'] == 'Capital Expenditure']
-    mean_capex = test.iloc[:, 2:].mean(axis=1)
-    # test.drop('Breakdown', axis=1).drop('ttm', axis=1).apply(lambda x: float(x).mean(), axis=1)
-    print(test)
-    print(mean_capex)
-    # mean_capex = cashflow_df['Capital Expenditure'].mean()
-    # print(mean_capex)
+    print(df)
+
 
 if __name__ == "__main__":
     main()
