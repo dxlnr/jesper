@@ -3,8 +3,7 @@ import pandas as pd
 from bs4 import BeautifulSoup
 import requests
 
-from src.scraper.scraper import get_event_page
-from src.scraper.yahoo_finance_utils import convert_to_float
+from jesper.scraper import get_event_page
 
 
 def scraper_to_statement(link: str) -> pd.DataFrame:
@@ -59,3 +58,25 @@ def scraper_to_latest_stock_price(link: str) -> float:
     ).text
 
     return price
+
+
+def extract_ttm_value(df: pd.DataFrame, v_name: str) -> float:
+    """Extract value from Trailing 12 months (TTM)."""
+    return df["ttm"].loc[df["Breakdown"] == v_name].values[0]
+
+
+def has_digits(in_str: str) -> bool:
+    """Returns Bool if str contains digits."""
+    return any(char.isdigit() for char in in_str)
+
+
+def convert_to_float(df: pd.DataFrame):
+    """Takes scraped dataframe and converts the str numbers to floats."""
+    for idx, key in enumerate(df.columns):
+        if idx == 0:
+            continue
+
+        df[key] = [
+            float(str(i).replace(",", "")) if has_digits(i) else i for i in df[key]
+        ]
+    return df

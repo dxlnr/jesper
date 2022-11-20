@@ -2,8 +2,7 @@ from typing import List
 
 import pandas as pd
 
-from src.scraper.yahoo_finance_utils import extract_ttm_value
-from src.scraper.yahoo_finance import scraper_to_statement
+from jesper.scraper.yahoo_finance import extract_ttm_value, scraper_to_statement
 
 
 def return_table(

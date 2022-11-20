@@ -11,7 +11,7 @@ def get_event_page(url: str):
     }
     # Pull data from link.
     try:
-        page_response = requests.get(link, headers=headers, timeout=1000)
+        page_response = requests.get(url, headers=headers, timeout=1000)
     except:
         raise Exception("Failed to load page {}".format(url))
     # Structure raw data for parsing.
