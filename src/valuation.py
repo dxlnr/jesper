@@ -2,7 +2,7 @@ from typing import List
 
 import pandas as pd
 
-from src.scraper.utils import convert_to_float, extract_ttm_value
+from src.scraper.yahoo_finance_utils import extract_ttm_value
 from src.scraper.yahoo_finance import scraper_to_statement
 
 
