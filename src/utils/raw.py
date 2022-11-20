@@ -32,7 +32,7 @@ def save_model_config(model_config, model_name):
         pathlib.Path(MODEL_CONFIGS_FOLDER).mkdir(exist_ok=True, parents=True)
     except Exception as ex:
         pass
-    with open(f"{MODEL_CONFIGS_FOLDER}/{model_name}.json", 'w') as fp:
+    with open(f"{MODEL_CONFIGS_FOLDER}/{model_name}.json", "w") as fp:
         json.dump(model_config, fp)
 
 
@@ -40,7 +40,7 @@ def load_model_config(model_name):
     path_str = f"{MODEL_CONFIGS_FOLDER}/{model_name}.json"
     path = pathlib.Path(path_str)
     if path.is_file():
-        with open(path_str, 'r') as fp:
+        with open(path_str, "r") as fp:
             model_config = json.load(fp)
     else:
         model_config = False

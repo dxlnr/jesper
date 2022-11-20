@@ -13,7 +13,7 @@ def clean(x, y):
 
 def extract_ttm_value(df: pd.DataFrame, v_name: str) -> float:
     """."""
-    return df['ttm'].loc[df["Breakdown"] == v_name].values[0]
+    return df["ttm"].loc[df["Breakdown"] == v_name].values[0]
 
 
 def has_digits(in_str: str) -> bool:
