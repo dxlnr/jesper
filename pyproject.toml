@@ -20,6 +20,8 @@ pyarrow = "^8.0.0"
 fastparquet = "^0.8.1"
 beautifulsoup4 = "^4.11.1"
 lxml = "^4.9.1"
+Jinja2 = "^3.1.2"
+colorama = "^0.4.6"
 
 [tool.poetry.dev-dependencies]
 

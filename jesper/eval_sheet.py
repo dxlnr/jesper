@@ -35,18 +35,21 @@ def eval_value_based_stocks(
     df = create_eval_table()
 
     for idx, stock in enumerate(stocks):
+        print(stock)
         # Compute the intrinsic value table.
         iv_df = intrinsic_value(stock, compound_rate, discount_rate, terms)
+        print(iv_df)
         # Scrape the latest stock price from yahoo finance.
         url = f"https://finance.yahoo.com/quote/{stock}?p={stock}"
         latest_stock_price = scraper_to_latest_stock_price(url)
 
         # Fill up the dataframe.
         df.at[idx, "stock"] = stock
-        df.at[idx, "intrinsic value"] = iv_df["Per Share"].iloc[0]
         df.at[idx, "latest stock price"] = latest_stock_price
-        df.at[idx, "safety margin"] = float(latest_stock_price) / float(
-            iv_df["Per Share"].iloc[0]
-        )
+        if len(iv_df.index) != 0:
+            df.at[idx, "intrinsic value"] = iv_df["Per Share"].iloc[0]
+            df.at[idx, "safety margin"] = float(latest_stock_price) / float(
+                iv_df["Per Share"].iloc[0]
+            )
 
     return df

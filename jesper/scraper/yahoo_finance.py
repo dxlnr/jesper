@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 import requests
 
 from jesper.scraper import get_event_page
+from jesper.scraper.scraper import _parse_json
 
 
 def scraper_to_statement(link: str) -> pd.DataFrame:
@@ -23,6 +24,11 @@ def scraper_to_statement(link: str) -> pd.DataFrame:
 
     # Filter for specific items
     features = page_content.find_all("div", class_="D(tbr)")
+
+    # Catch exception and return empty Dataframe.
+    if len(features) == 0:
+        return pd.DataFrame()
+
     # Create headers
     for item in features[0].find_all("div", class_="D(ib)"):
         items.append(item.text)
@@ -58,6 +64,44 @@ def scraper_to_latest_stock_price(link: str) -> float:
     ).text
 
     return price
+
+
+def _parse_table(json_info):
+    """."""
+    df = pd.DataFrame(json_info)
+
+    if df.empty:
+        return df
+
+    del df["maxAge"]
+
+    df.set_index("endDate", inplace=True)
+    df.index = pd.to_datetime(df.index, unit="s")
+
+    df = df.transpose()
+    df.index.name = "Breakdown"
+
+    return df
+
+
+def get_balance_sheet(ticker: str, annual: bool = True):
+    """Scrapes balance sheet from Yahoo Finance for an input ticker.
+
+    :param ticker:
+    :param annual: Yahoo Finance offers stats annual & quarterly.
+    """
+    bs_link = f"https://finance.yahoo.com/quote/{ticker}/financials?p={ticker}"
+
+    json_info = _parse_json(bs_link)
+    try:
+        if annual:
+            temp = json_info["balanceSheetHistory"]["balanceSheetStatements"]
+        else:
+            temp = json_info["balanceSheetHistoryQuarterly"]["balanceSheetStatements"]
+    except:
+        temp = []
+
+    return _parse_table(temp)
 
 
 def extract_latest_value(df: pd.DataFrame, v_name: str) -> float:

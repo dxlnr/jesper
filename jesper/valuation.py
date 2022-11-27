@@ -74,6 +74,9 @@ def intrinsic_value(
     # Instantiate resulting table.
     df = return_table()
 
+    if len(income_df.columns) == 0 or len(balance_sheet_df.columns) == 0 or len(cashflow_df.columns) == 0:
+        return df
+
     # Pulling in the desired fields ebit, depreciation & capex
     df.at[0, "incomeBeforeTax"] = extract_latest_value(income_df, "EBIT")
     df.at[0, "depreciation"] = extract_latest_value(income_df, "Reconciled Depreciation")
