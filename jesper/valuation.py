@@ -2,7 +2,7 @@ from typing import List
 
 import pandas as pd
 
-from jesper.scraper.yahoo_finance import extract_ttm_value, scraper_to_statement
+from jesper.scraper.yahoo_finance import extract_latest_value, scraper_to_statement
 
 
 def return_table(
@@ -75,9 +75,9 @@ def intrinsic_value(
     df = return_table()
 
     # Pulling in the desired fields ebit, depreciation & capex
-    df.at[0, "incomeBeforeTax"] = extract_ttm_value(income_df, "EBIT")
-    df.at[0, "depreciation"] = extract_ttm_value(income_df, "Reconciled Depreciation")
-    df.at[0, "capitalExpenditures"] = extract_ttm_value(
+    df.at[0, "incomeBeforeTax"] = extract_latest_value(income_df, "EBIT")
+    df.at[0, "depreciation"] = extract_latest_value(income_df, "Reconciled Depreciation")
+    df.at[0, "capitalExpenditures"] = extract_latest_value(
         cashflow_df, "Capital Expenditure"
     )
 
@@ -107,9 +107,8 @@ def intrinsic_value(
     df["Intrinsic Value"] = df["OE*PV"] + df["OE*DCF"]
 
     # Find Outstanding Shares
-    df.at[0, "Outstanding Shares"] = (
-        income_df[income_df["Breakdown"] == "Diluted Average Shares"].iloc[:, 2].iloc[0]
-    )
+    df.at[0, "Outstanding Shares"] = extract_latest_value(income_df, "Diluted Average Shares")
+
     df["Per Share"] = df["Intrinsic Value"] / df["Outstanding Shares"]
 
     return df

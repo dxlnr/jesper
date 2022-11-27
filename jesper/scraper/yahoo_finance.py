@@ -60,6 +60,20 @@ def scraper_to_latest_stock_price(link: str) -> float:
     return price
 
 
+def extract_latest_value(df: pd.DataFrame, v_name: str) -> float:
+    """Extract value latest value from sheet."""
+    for k in df.keys():
+        if isinstance(num := extract_k_value(df, k, v_name), float):
+            return num
+
+    raise Exception(f"No \'{v_name}\' value found.")
+
+
+def extract_k_value(df: pd.DataFrame, v_key: str, v_name: str) -> float:
+    """Extract value from specific key."""
+    return df[v_key].loc[df["Breakdown"] == v_name].values[0]
+
+
 def extract_ttm_value(df: pd.DataFrame, v_name: str) -> float:
     """Extract value from Trailing 12 months (TTM)."""
     return df["ttm"].loc[df["Breakdown"] == v_name].values[0]
