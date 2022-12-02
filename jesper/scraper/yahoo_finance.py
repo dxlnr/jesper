@@ -72,16 +72,13 @@ def _parse_table(json_info):
 
     if df.empty:
         return df
-
     del df["maxAge"]
 
     df.set_index("endDate", inplace=True)
     df.index = pd.to_datetime(df.index, unit="s")
+    df.index = df.index.year
 
-    df = df.transpose()
-    df.index.name = "Breakdown"
-
-    return df
+    return df.transpose()
 
 
 def get_balance_sheet(ticker: str, annual: bool = True):
@@ -90,18 +87,94 @@ def get_balance_sheet(ticker: str, annual: bool = True):
     :param ticker:
     :param annual: Yahoo Finance offers stats annual & quarterly.
     """
-    bs_link = f"https://finance.yahoo.com/quote/{ticker}/financials?p={ticker}"
-
+    bs_link = f"https://finance.yahoo.com/quote/{ticker}/balance-sheet?p={ticker}"
     json_info = _parse_json(bs_link)
     try:
         if annual:
-            temp = json_info["balanceSheetHistory"]["balanceSheetStatements"]
+            tmp = json_info["balanceSheetHistory"]["balanceSheetStatements"]
         else:
-            temp = json_info["balanceSheetHistoryQuarterly"]["balanceSheetStatements"]
+            tmp = json_info["balanceSheetHistoryQuarterly"]["balanceSheetStatements"]
     except:
-        temp = []
+        tmp = []
 
-    return _parse_table(temp)
+    return _parse_table(tmp)
+
+
+def get_income_statement(ticker: str, annual: bool = True):
+    """Scrape income statement from Yahoo Finance for an input ticker.
+
+    :param ticker:
+    :param annual: Yahoo Finance offers stats annual & quarterly.
+    """
+    in_link = f"https://finance.yahoo.com/quote/{ticker}/financials?p={ticker}"
+    json_info = _parse_json(in_link)
+
+    if annual:
+        tmp = json_info["incomeStatementHistory"]["incomeStatementHistory"]
+    else:
+        tmp = json_info["incomeStatementHistoryQuarterly"]["incomeStatementHistory"]
+
+    return _parse_table(tmp)
+
+
+def get_cash_flow(ticker: str, annual: bool = True):
+    """Scrapes the cash flow statement from Yahoo Finance for an input ticker.
+
+    :param ticker:
+    :param annual: Yahoo Finance offers stats annual & quarterly.
+    """
+    cf_link = f"https://finance.yahoo.com/quote/{ticker}/cash-flow?p={ticker}"
+    json_info = _parse_json(cf_link)
+
+    if annual:
+        tmp = json_info["cashflowStatementHistory"]["cashflowStatements"]
+    else:
+        tmp = json_info["cashflowStatementHistoryQuarterly"]["cashflowStatements"]
+
+    return _parse_table(tmp)
+
+
+def get_balance_sheet_from_yfinance_web(ticker):
+    from datetime import datetime
+    url = f"https://finance.yahoo.com/quote/{ticker}/balance-sheet?p={ticker}"
+    header = {'Connection': 'keep-alive',
+                'Expires': '-1',
+                'Upgrade-Insecure-Requests': '1',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) \
+                AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36'
+                }
+
+    r = requests.get(url, headers=header)
+    html = r.text
+    soup = BeautifulSoup(html, "html.parser")
+
+    div = soup.find_all('div', attrs={'class': 'D(tbhg)'})
+    if len(div) < 1:
+        print("Fail to retrieve table column header")
+        exit(0)
+
+    col = []
+    for h in div[0].find_all('span'):
+        text = h.get_text()
+        if text != "Breakdown":
+            col.append(datetime.strptime(text, "%m/%d/%Y"))
+
+    df = pd.DataFrame(columns=col)
+    for div in soup.find_all('div', attrs={'data-test': 'fin-row'}):
+        i = 0
+        idx = ""
+        val = []
+        for h in div.find_all('span'):
+            if i == 0:
+                idx = h.get_text()
+            else:
+                num = int(h.get_text().replace(",", "")) * 1000
+                val.append( num )
+            i += 1
+        row = pd.DataFrame([val], columns=col, index=[idx] )
+        df = df.append(row)
+
+    return df
 
 
 def extract_latest_value(df: pd.DataFrame, v_name: str) -> float:
