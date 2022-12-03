@@ -1,0 +1,6 @@
+beautifulsoup4
+colorama
+Jinja2
+lxml
+pandas
+requests

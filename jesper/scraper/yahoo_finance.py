@@ -21,6 +21,22 @@ def scraper_to_latest_stock_price(link: str) -> float:
     return price
 
 
+def _create_empty_timeseries_dict() -> dict:
+    """
+    Returns an empty TimeSeries dictionary.
+    {
+    'dataId': int,
+    'asOfDate': str,
+    'periodType': str,
+    'currencyCode': str,
+    'reportedValue': int
+    }
+    """
+    return dict.fromkeys(
+        ["dataId", "asOfDate", "periodType", "currencyCode", "reportedValue"]
+    )
+
+
 def _convert_json_to_pd(json_info):
     """."""
     df = pd.DataFrame(json_info)
@@ -40,9 +56,13 @@ def _convert_json_to_pd(json_info):
     return df.transpose()
 
 
-def _parse_timeseries_table(json_info, name: str = "", value: str = "reportedValue"):
+def _parse_timeseries_table(
+    table: list[dict], name: str = "", value: str = "reportedValue"
+):
     """."""
-    df = pd.DataFrame(json_info)
+    table = [_create_empty_timeseries_dict() if t is None else t for t in table]
+    df = pd.DataFrame(table)
+    print(df)
     # Make sure dataframe is actually fetched correctly.
     if df.empty:
         return df
@@ -89,7 +109,7 @@ def get_balance_sheet(ticker: str, annual: bool = True):
 
 def get_income_statement(ticker: str, annual: bool = True):
     """Scrape income statement from Yahoo Finance for an input ticker.
-json_to_pd
+
     :param ticker: Determines the stock.
     :param annual: Yahoo Finance offers stats annual & quarterly.
     :returns: pandas.df containing income statement history.
