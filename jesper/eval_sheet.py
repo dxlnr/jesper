@@ -2,7 +2,7 @@ from typing import List
 
 import pandas as pd
 
-from jesper.scraper import scraper_to_latest_stock_price
+from jesper.scraper.yahoo_finance import scraper_to_latest_stock_price
 from jesper.valuation import intrinsic_value
 
 

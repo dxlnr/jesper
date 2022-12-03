@@ -31,9 +31,10 @@ def main():
 
     # test = ['A', 'AAL', 'AAP', 'AAPL', 'ABBV', 'ABC', 'ABMD', 'ABT', 'ACGL', 'ACN']
     # Get list of ticker symbols of all s&p 500 stocks.
-    sp500 = tickers_sp500()
+    # sp500 = tickers_sp500()
+    test = ['A']
     # Calculate evaluation facilitating value based investing.
-    df = eval_value_based_stocks(sp500[:10])
+    df = eval_value_based_stocks(test)
     # Apply styling for highlighting outstanding values.
     df = df.round({"intrinsic value": 2})
     df["safety margin"] = df["safety margin"].apply(color_low_safety_margin_green)

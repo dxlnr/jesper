@@ -25,7 +25,7 @@ def get_event_page(url: str):
     return page_content
 
 
-def _parse_json(
+def _parse_page_content_as_json(
     url: str,
     headers: Dict[str, str] = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36\
@@ -47,8 +47,6 @@ def _parse_json(
         timeseries_data = json.loads(json_str)["context"]["dispatcher"]["stores"][
             "QuoteTimeSeriesStore"
         ]
-
-        # return summary_data, timeseries_data
     except:
         return "{}"
     else:

@@ -154,3 +154,6 @@ cython_debug/
 
 # Datast
 data/numerai/*
+
+# Assets
+assets/advances-in-financial-machine-learning.pdf

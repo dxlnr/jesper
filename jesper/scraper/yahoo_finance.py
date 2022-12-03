@@ -3,7 +3,7 @@ import pandas as pd
 import requests
 
 from jesper.scraper import get_event_page
-from jesper.scraper.scraper import _parse_json
+from jesper.scraper.scraper import _parse_page_content_as_json
 
 
 def scraper_to_latest_stock_price(link: str) -> float:
@@ -21,7 +21,7 @@ def scraper_to_latest_stock_price(link: str) -> float:
     return price
 
 
-def _parse_table(json_info):
+def _convert_json_to_pd(json_info):
     """."""
     df = pd.DataFrame(json_info)
     # Make sure dataframe is actually fetched correctly.
@@ -73,8 +73,7 @@ def get_balance_sheet(ticker: str, annual: bool = True):
     :returns: pandas.df containing balance shee history.
     """
     bs_link = f"https://finance.yahoo.com/quote/{ticker}/balance-sheet?p={ticker}"
-    # json_info = _parse_json(bs_link)
-    summary_data, timeseries_data = _parse_json(bs_link)
+    summary_data, timeseries_data = _parse_page_content_as_json(bs_link)
     try:
         if annual:
             summary = summary_data["balanceSheetHistory"]["balanceSheetStatements"]
@@ -85,19 +84,19 @@ def get_balance_sheet(ticker: str, annual: bool = True):
     except:
         summary = []
 
-    return _parse_table(summary)
+    return _convert_json_to_pd(summary)
 
 
 def get_income_statement(ticker: str, annual: bool = True):
     """Scrape income statement from Yahoo Finance for an input ticker.
-
+json_to_pd
     :param ticker: Determines the stock.
     :param annual: Yahoo Finance offers stats annual & quarterly.
     :returns: pandas.df containing income statement history.
     :returns: pandas.df containing historic annual diluted Shares.
     """
     in_link = f"https://finance.yahoo.com/quote/{ticker}/financials?p={ticker}"
-    summary_data, timeseries_data = _parse_json(in_link)
+    summary_data, timeseries_data = _parse_page_content_as_json(in_link)
 
     if annual:
         summary = summary_data["incomeStatementHistory"]["incomeStatementHistory"]
@@ -308,7 +307,7 @@ def get_income_statement(ticker: str, annual: bool = True):
 
     df = pd.concat(
         [
-            _parse_table(summary),
+            _convert_json_to_pd(summary),
             _parse_timeseries_table(
                 annual_diluted_shares, name="annualDilutedAverageShares"
             ),
@@ -325,7 +324,7 @@ def get_cash_flow(ticker: str, annual: bool = True):
     :returns: pandas.df containing cashflow statement history.
     """
     cf_link = f"https://finance.yahoo.com/quote/{ticker}/cash-flow?p={ticker}"
-    summary_data, _ = _parse_json(cf_link)
+    summary_data, _ = _parse_page_content_as_json(cf_link)
 
     if annual:
         summary = summary_data["cashflowStatementHistory"]["cashflowStatements"]
@@ -334,7 +333,7 @@ def get_cash_flow(ticker: str, annual: bool = True):
             "cashflowStatements"
         ]
 
-    return _parse_table(summary)
+    return _convert_json_to_pd(summary)
 
 
 def get_stats(ticker, headers={"User-agent": "Mozilla/5.0"}):
