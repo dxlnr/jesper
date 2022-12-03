@@ -36,6 +36,6 @@ def readable_df(df):
         df[k] = df[k].apply(lambda x: millify(x))
     # Convert to percentage numbers.
     for k in df.keys()[4:]:
-        df[k] = df[k].map('{:.2%}'.format)
+        df[k] = df[k].map("{:.2%}".format)
 
     return df

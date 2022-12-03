@@ -35,10 +35,9 @@ def eval_value_based_stocks(
     df = create_eval_table()
 
     for idx, stock in enumerate(stocks):
-        print(stock)
+        print(f"Calculating intrinsic_value for {stock}.")
         # Compute the intrinsic value table.
         iv_df = intrinsic_value(stock, compound_rate, discount_rate, terms)
-        print(iv_df)
         # Scrape the latest stock price from yahoo finance.
         url = f"https://finance.yahoo.com/quote/{stock}?p={stock}"
         latest_stock_price = scraper_to_latest_stock_price(url)

@@ -1,54 +1,9 @@
-import numpy as np
+"""Yahoo Finance Scraping functions"""
 import pandas as pd
-from bs4 import BeautifulSoup
 import requests
 
 from jesper.scraper import get_event_page
 from jesper.scraper.scraper import _parse_json
-
-
-def scraper_to_statement(link: str) -> pd.DataFrame:
-    r"""Scrape from link and convert to data frame.
-
-    :param link: API endpoint as str.
-    :returns: Pandas dataframe.
-    """
-    # Scrape raw data for parsing.
-    page_content = get_event_page(link)
-
-    # Params
-    items = []
-    temp_list = []
-    final = []
-    index = 0
-
-    # Filter for specific items
-    features = page_content.find_all("div", class_="D(tbr)")
-
-    # Catch exception and return empty Dataframe.
-    if len(features) == 0:
-        return pd.DataFrame()
-
-    # Create headers
-    for item in features[0].find_all("div", class_="D(ib)"):
-        items.append(item.text)
-
-    # Statement contents
-    while index <= len(features) - 1:
-        # Filter for each line of the statement.
-        temp = features[index].find_all("div", class_="D(tbc)")
-        for line in temp:
-            temp_list.append(line.text)
-
-        final.append(temp_list)
-        temp_list = []
-        index += 1
-
-    df = pd.DataFrame(final[1:])
-    df.columns = items
-    df = convert_to_float(df)
-
-    return df
 
 
 def scraper_to_latest_stock_price(link: str) -> float:
@@ -149,88 +104,198 @@ def get_income_statement(ticker: str, annual: bool = True):
 
         #  timeseries_data["timeSeries"].keys()
         #
-        # ['trailingNetIncomeFromContinuingOperationNetMinorityInterest',
+        # 'trailingNetIncomeFromContinuingOperationNetMinorityInterest',
         # 'trailingReconciledDepreciation',
         # 'annualNetIncomeFromContinuingOperationNetMinorityInterest',
-        # 'annualNetIncomeContinuousOperations', 'annualOperatingExpense',
+        # 'annualNetIncomeContinuousOperations',
+        # 'annualOperatingExpense',
         # 'trailingSellingGeneralAndAdministration',
         # 'annualNetIncomeFromContinuingAndDiscontinuedOperation',
-        # 'trailingOtherNonOperatingIncomeExpenses', 'annualDilutedEPS',
-        # 'trailingOperatingExpense', 'annualOtherSpecialCharges', 'trailingOperatingRevenue',
-        # 'trailingNetIncomeContinuousOperations', 'annualTotalOperatingIncomeAsReported',
-        # 'annualBasicAverageShares', 'trailingNormalizedEBITDA',
-        # 'annualRestructuringAndMergernAcquisition', 'annualTaxEffectOfUnusualItems',
-        # 'annualDepreciationAndAmortizationInIncomeStatement', 'annualGeneralAndAdministrativeExpense',
-        # 'annualTaxProvision', 'annualInterestExpense', 'annualAmortization',
-        # 'trailingCostOfRevenue', 'trailingDilutedNIAvailtoComStockholders', 'trailingInterestIncome',
-        # 'trailingNetIncomeIncludingNoncontrollingInterests', 'annualBasicEPS',
-        # 'trailingTotalUnusualItems', 'annualWriteOff', 'annualTotalRevenue', 'annualTaxRateForCalcs',
-        # 'annualInterestIncome', 'annualNetIncomeCommonStockholders', 'trailingEBIT',
-        # 'annualOperatingRevenue', 'annualResearchAndDevelopment',
+        # 'trailingOtherNonOperatingIncomeExpenses',
+        # 'annualDilutedEPS',
+        # 'trailingOperatingExpense',
+        # 'annualOtherSpecialCharges',
+        # 'trailingOperatingRevenue',
+        # 'trailingNetIncomeContinuousOperations',
+        # 'annualTotalOperatingIncomeAsReported',
+        # 'annualBasicAverageShares',
+        # 'trailingNormalizedEBITDA',
+        # 'annualRestructuringAndMergernAcquisition',
+        # 'annualTaxEffectOfUnusualItems',
+        # 'annualDepreciationAndAmortizationInIncomeStatement',
+        # 'annualGeneralAndAdministrativeExpense',
+        # 'annualTaxProvision',
+        # 'annualInterestExpense',
+        # 'annualAmortization',
+        # 'trailingCostOfRevenue',
+        # 'trailingDilutedNIAvailtoComStockholders',
+        # 'trailingInterestIncome',
+        # 'trailingNetIncomeIncludingNoncontrollingInterests',
+        # 'annualBasicEPS',
+        # 'trailingTotalUnusualItems',
+        # 'annualWriteOff',
+        # 'annualTotalRevenue',
+        # 'annualTaxRateForCalcs',
+        # 'annualInterestIncome',
+        # 'annualNetIncomeCommonStockholders',
+        # 'trailingEBIT',
+        # 'annualOperatingRevenue',
+        # 'annualResearchAndDevelopment',
         # 'annualDepreciationAmortizationDepletionIncomeStatement',
-        # 'annualOtherOperatingExpenses', 'annualGrossProfit',
-        # 'annualOtherNonOperatingIncomeExpenses', 'trailingTotalOperatingIncomeAsReported',
-        # 'annualNetIncomeIncludingNoncontrollingInterests', 'trailingSellingAndMarketingExpense',
-        # 'annualNormalizedEBITDA', 'annualSpecialIncomeCharges', 'trailingTaxEffectOfUnusualItems',
-        # 'annualReconciledDepreciation', 'trailingEBITDA', 'trailingGainOnSaleOfSecurity',
-        # 'annualNormalizedIncome', 'trailingNetInterestIncome', 'trailingNetNonOperatingInterestIncomeExpense',
-        # 'trailingTotalExpenses', 'annualAmortizationOfIntangiblesIncomeStatement',
-        # 'trailingNormalizedIncome', 'annualNetInterestIncome',
-        # 'annualNetNonOperatingInterestIncomeExpense', 'annualOtherIncomeExpense',
-        # 'trailingOtherOperatingExpenses', 'trailingGrossProfit', 'annualOperatingIncome',
-        # 'trailingNetIncomeCommonStockholders', 'trailingTaxRateForCalcs', 'annualEBIT',
-        # 'annualReconciledCostOfRevenue', 'trailingNetIncome',
-        # 'annualGainOnSaleOfSecurity', 'annualSalariesAndWages', 'trailingInterestIncomeNonOperating',
-        # 'trailingPretaxIncome', 'trailingOtherGandA', 'annualSellingAndMarketingExpense',
-        # 'trailingInterestExpense', 'annualDilutedNIAvailtoComStockholders',
-        # 'annualEarningsFromEquityInterestNetOfTax', 'annualNetIncome', 'annualPretaxIncome',
-        # 'annualTotalUnusualItems', 'annualNetIncomeExtraordinary',
-        # 'annualTotalUnusualItemsExcludingGoodwill', 'trailingTotalRevenue', 'trailingInterestExpenseNonOperating',
-        # 'annualEarningsFromEquityInterest', 'annualInterestExpenseNonOperating',
-        # 'annualCostOfRevenue', 'annualOtherunderPreferredStockDividend',
-        # 'trailingTotalUnusualItemsExcludingGoodwill', 'trailingOtherIncomeExpense',
-        # 'annualTotalExpenses', 'trailingOperatingIncome', 'annualImpairmentOfCapitalAssets',
+        # 'annualOtherOperatingExpenses',
+        # 'annualGrossProfit',
+        # 'annualOtherNonOperatingIncomeExpenses',
+        # 'trailingTotalOperatingIncomeAsReported',
+        # 'annualNetIncomeIncludingNoncontrollingInterests',
+        # 'trailingSellingAndMarketingExpense',
+        # 'annualNormalizedEBITDA',
+        # 'annualSpecialIncomeCharges',
+        # 'trailingTaxEffectOfUnusualItems',
+        # 'annualReconciledDepreciation',
+        # 'trailingEBITDA',
+        # 'trailingGainOnSaleOfSecurity',
+        # 'annualNormalizedIncome',
+        # 'trailingNetInterestIncome',
+        # 'trailingNetNonOperatingInterestIncomeExpense',
+        # 'trailingTotalExpenses',
+        # 'annualAmortizationOfIntangiblesIncomeStatement',
+        # 'trailingNormalizedIncome',
+        # 'annualNetInterestIncome',
+        # 'annualNetNonOperatingInterestIncomeExpense',
+        # 'annualOtherIncomeExpense',
+        # 'trailingOtherOperatingExpenses',
+        # 'trailingGrossProfit',
+        # 'annualOperatingIncome',
+        # 'trailingNetIncomeCommonStockholders',
+        # 'trailingTaxRateForCalcs',
+        # 'annualEBIT',
+        # 'annualReconciledCostOfRevenue',
+        # 'trailingNetIncome',
+        # 'annualGainOnSaleOfSecurity',
+        # 'annualSalariesAndWages',
+        # 'trailingInterestIncomeNonOperating',
+        # 'trailingPretaxIncome',
+        # 'trailingOtherGandA',
+        # 'annualSellingAndMarketingExpense',
+        # 'trailingInterestExpense',
+        # 'annualDilutedNIAvailtoComStockholders',
+        # 'annualEarningsFromEquityInterestNetOfTax',
+        # 'annualNetIncome',
+        # 'annualPretaxIncome',
+        # 'annualTotalUnusualItems',
+        # 'annualNetIncomeExtraordinary',
+        # 'annualTotalUnusualItemsExcludingGoodwill',
+        # 'trailingTotalRevenue',
+        # 'trailingInterestExpenseNonOperating',
+        # 'annualEarningsFromEquityInterest',
+        # 'annualInterestExpenseNonOperating',
+        # 'annualCostOfRevenue',
+        # 'annualOtherunderPreferredStockDividend',
+        # 'trailingTotalUnusualItemsExcludingGoodwill',
+        # 'trailingOtherIncomeExpense',
+        # 'annualTotalExpenses',
+        # 'trailingOperatingIncome',
+        # 'annualImpairmentOfCapitalAssets',
         # 'trailingNetIncomeFromContinuingAndDiscontinuedOperation',
-        # 'annualSellingGeneralAndAdministration', 'trailingGeneralAndAdministrativeExpense',
-        # 'annualOtherGandA', 'trailingTaxProvision', 'trailingEarningsFromEquityInterestNetOfTax',
-        # 'trailingReconciledCostOfRevenue', 'annualInterestIncomeNonOperating',
-        # 'annualDilutedAverageShares', 'annualBasicDiscontinuousOperations',
-        # 'annualDilutedDiscontinuousOperations', 'trailingBasicEPSOtherGainsLosses',
-        # 'annualProvisionForDoubtfulAccounts', 'annualMinorityInterests', 'trailingDilutedEPSOtherGainsLosses',
-        # 'annualDepletionIncomeStatement', 'annualDividendPerShare', 'trailingOtherSpecialCharges',
-        # 'annualBasicExtraordinary', 'trailingNormalizedDilutedEPS', 'annualReportedNormalizedBasicEPS',
-        # 'trailingTaxLossCarryforwardBasicEPS', 'trailingBasicExtraordinary', 'trailingSpecialIncomeCharges',
-        # 'annualDilutedExtraordinary', 'trailingSecuritiesAmortization', 'trailingBasicEPS',
-        # 'trailingProvisionForDoubtfulAccounts', 'trailingDilutedAverageShares',
-        # 'trailingSalariesAndWages', 'trailingDilutedContinuousOperations', 'trailingGainOnSaleOfBusiness',
-        # 'annualBasicAccountingChange', 'trailingEarningsFromEquityInterest', 'annualDilutedAccountingChange',
-        # 'trailingAverageDilutionEarnings', 'annualBasicContinuousOperations', 'annualTaxLossCarryforwardBasicEPS',
-        # 'annualContinuingAndDiscontinuedBasicEPS', 'trailingDilutedAccountingChange',
-        # 'trailingBasicAverageShares', 'trailingDilutedExtraordinary',
-        # 'annualDepreciationIncomeStatement', 'trailingContinuingAndDiscontinuedDilutedEPS',
-        # 'trailingBasicDiscontinuousOperations', 'trailingDilutedDiscontinuousOperations',
-        # 'trailingPreferredStockDividends', 'annualOtherTaxes', 'annualRentExpenseSupplemental',
-        # 'trailingNetIncomeFromTaxLossCarryforward', 'trailingTotalOtherFinanceCost',
-        # 'trailingAmortization', 'trailingAmortizationOfIntangiblesIncomeStatement',
-        # 'trailingInsuranceAndClaims', 'annualExciseTaxes', 'trailingImpairmentOfCapitalAssets',
-        # 'trailingRentExpenseSupplemental', 'trailingNetIncomeExtraordinary', 'annualSecuritiesAmortization',
-        # 'annualTaxLossCarryforwardDilutedEPS', 'annualNormalizedDilutedEPS', 'trailingGainOnSaleOfPPE',
-        # 'annualReportedNormalizedDilutedEPS', 'trailingReportedNormalizedBasicEPS',
-        # 'trailingMinorityInterests', 'trailingTaxLossCarryforwardDilutedEPS', 'trailingWriteOff',
-        # 'trailingDepreciationIncomeStatement', 'annualPreferredStockDividends', 'annualNormalizedBasicEPS',
-        # 'trailingDepreciationAmortizationDepletionIncomeStatement', 'annualInsuranceAndClaims',
-        # 'trailingRentAndLandingFees', 'trailingNetIncomeDiscontinuousOperations',
-        # 'annualBasicEPSOtherGainsLosses', 'annualRentAndLandingFees',
-        # 'annualNetIncomeDiscontinuousOperations', 'trailingBasicContinuousOperations',
-        # 'annualTotalOtherFinanceCost', 'annualContinuingAndDiscontinuedDilutedEPS',
-        # 'trailingDepreciationAndAmortizationInIncomeStatement', 'annualDilutedContinuousOperations',
-        # 'trailingOtherunderPreferredStockDividend', 'annualDilutedEPSOtherGainsLosses',
-        # 'trailingBasicAccountingChange', 'trailingContinuingAndDiscontinuedBasicEPS',
-        # 'trailingNormalizedBasicEPS', 'trailingReportedNormalizedDilutedEPS',
-        # 'trailingDepletionIncomeStatement', 'trailingDividendPerShare', 'trailingExciseTaxes',
-        # 'trailingRestructuringAndMergernAcquisition', 'annualGainOnSaleOfPPE', 'trailingResearchAndDevelopment',
-        # 'annualGainOnSaleOfBusiness', 'annualAverageDilutionEarnings', 'trailingOtherTaxes',
-        # 'trailingDilutedEPS', 'annualNetIncomeFromTaxLossCarryforward', 'timestamp']
+        # 'annualSellingGeneralAndAdministration',
+        # 'trailingGeneralAndAdministrativeExpense',
+        # 'annualOtherGandA',
+        # 'trailingTaxProvision',
+        # 'trailingEarningsFromEquityInterestNetOfTax',
+        # 'trailingReconciledCostOfRevenue',
+        # 'annualInterestIncomeNonOperating',
+        # 'annualDilutedAverageShares',
+        # 'annualBasicDiscontinuousOperations',
+        # 'annualDilutedDiscontinuousOperations',
+        # 'trailingBasicEPSOtherGainsLosses',
+        # 'annualProvisionForDoubtfulAccounts',
+        # 'annualMinorityInterests',
+        # 'trailingDilutedEPSOtherGainsLosses',
+        # 'annualDepletionIncomeStatement',
+        # 'annualDividendPerShare',
+        # 'trailingOtherSpecialCharges',
+        # 'annualBasicExtraordinary',
+        # 'trailingNormalizedDilutedEPS',
+        # 'annualReportedNormalizedBasicEPS',
+        # 'trailingTaxLossCarryforwardBasicEPS',
+        # 'trailingBasicExtraordinary',
+        # 'trailingSpecialIncomeCharges',
+        # 'annualDilutedExtraordinary',
+        # 'trailingSecuritiesAmortization',
+        # 'trailingBasicEPS',
+        # 'trailingProvisionForDoubtfulAccounts',
+        # 'trailingDilutedAverageShares',
+        # 'trailingSalariesAndWages',
+        # 'trailingDilutedContinuousOperations',
+        # 'trailingGainOnSaleOfBusiness',
+        # 'annualBasicAccountingChange',
+        # 'trailingEarningsFromEquityInterest',
+        # 'annualDilutedAccountingChange',
+        # 'trailingAverageDilutionEarnings',
+        # 'annualBasicContinuousOperations',
+        # 'annualTaxLossCarryforwardBasicEPS',
+        # 'annualContinuingAndDiscontinuedBasicEPS',
+        # 'trailingDilutedAccountingChange',
+        # 'trailingBasicAverageShares',
+        # 'trailingDilutedExtraordinary',
+        # 'annualDepreciationIncomeStatement',
+        # 'trailingContinuingAndDiscontinuedDilutedEPS',
+        # 'trailingBasicDiscontinuousOperations',
+        # 'trailingDilutedDiscontinuousOperations',
+        # 'trailingPreferredStockDividends',
+        # 'annualOtherTaxes',
+        # 'annualRentExpenseSupplemental',
+        # 'trailingNetIncomeFromTaxLossCarryforward',
+        # 'trailingTotalOtherFinanceCost',
+        # 'trailingAmortization',
+        # 'trailingAmortizationOfIntangiblesIncomeStatement',
+        # 'trailingInsuranceAndClaims',
+        # 'annualExciseTaxes',
+        # 'trailingImpairmentOfCapitalAssets',
+        # 'trailingRentExpenseSupplemental',
+        # 'trailingNetIncomeExtraordinary',
+        # 'annualSecuritiesAmortization',
+        # 'annualTaxLossCarryforwardDilutedEPS',
+        # 'annualNormalizedDilutedEPS',
+        # 'trailingGainOnSaleOfPPE',
+        # 'annualReportedNormalizedDilutedEPS',
+        # 'trailingReportedNormalizedBasicEPS',
+        # 'trailingMinorityInterests',
+        # 'trailingTaxLossCarryforwardDilutedEPS',
+        # 'trailingWriteOff',
+        # 'trailingDepreciationIncomeStatement',
+        # 'annualPreferredStockDividends',
+        # 'annualNormalizedBasicEPS',
+        # 'trailingDepreciationAmortizationDepletionIncomeStatement',
+        # 'annualInsuranceAndClaims',
+        # 'trailingRentAndLandingFees',
+        # 'trailingNetIncomeDiscontinuousOperations',
+        # 'annualBasicEPSOtherGainsLosses',
+        # 'annualRentAndLandingFees',
+        # 'annualNetIncomeDiscontinuousOperations',
+        # 'trailingBasicContinuousOperations',
+        # 'annualTotalOtherFinanceCost',
+        # 'annualContinuingAndDiscontinuedDilutedEPS',
+        # 'trailingDepreciationAndAmortizationInIncomeStatement',
+        # 'annualDilutedContinuousOperations',
+        # 'trailingOtherunderPreferredStockDividend',
+        # 'annualDilutedEPSOtherGainsLosses',
+        # 'trailingBasicAccountingChange',
+        # 'trailingContinuingAndDiscontinuedBasicEPS',
+        # 'trailingNormalizedBasicEPS',
+        # 'trailingReportedNormalizedDilutedEPS',
+        # 'trailingDepletionIncomeStatement',
+        # 'trailingDividendPerShare',
+        # 'trailingExciseTaxes',
+        # 'trailingRestructuringAndMergernAcquisition',
+        # 'annualGainOnSaleOfPPE',
+        # 'trailingResearchAndDevelopment',
+        # 'annualGainOnSaleOfBusiness',
+        # 'annualAverageDilutionEarnings',
+        # 'trailingOtherTaxes',
+        # 'trailingDilutedEPS',
+        # 'annualNetIncomeFromTaxLossCarryforward',
+        # 'timestamp'
         #
         timeseries = timeseries_data["timeSeries"]
 
@@ -290,39 +355,3 @@ def get_stats(ticker, headers={"User-agent": "Mozilla/5.0"}):
     table = table.reset_index(drop=True)
 
     return table
-
-
-def extract_latest_value(df: pd.DataFrame, v_name: str) -> float:
-    """Extract value latest value from sheet."""
-    for k in df.keys():
-        if isinstance(num := extract_k_value(df, k, v_name), float):
-            return num
-
-    raise Exception(f"No '{v_name}' value found.")
-
-
-def extract_k_value(df: pd.DataFrame, v_key: str, v_name: str) -> float:
-    """Extract value from specific key."""
-    return df[v_key].loc[df["Breakdown"] == v_name].values[0]
-
-
-def extract_ttm_value(df: pd.DataFrame, v_name: str) -> float:
-    """Extract value from Trailing 12 months (TTM)."""
-    return df["ttm"].loc[df["Breakdown"] == v_name].values[0]
-
-
-def has_digits(in_str: str) -> bool:
-    """Returns Bool if str contains digits."""
-    return any(char.isdigit() for char in in_str)
-
-
-def convert_to_float(df: pd.DataFrame):
-    """Takes scraped dataframe and converts the str numbers to floats."""
-    for idx, key in enumerate(df.columns):
-        if idx == 0:
-            continue
-
-        df[key] = [
-            float(str(i).replace(",", "")) if has_digits(i) else i for i in df[key]
-        ]
-    return df
