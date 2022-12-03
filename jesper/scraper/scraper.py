@@ -41,16 +41,29 @@ def _parse_json(
         html.split("root.App.main =")[1].split("(this)")[0].split(";\n}")[0].strip()
     )
     try:
-        data = json.loads(json_str)["context"]["dispatcher"]["stores"][
+        summary_data = json.loads(json_str)["context"]["dispatcher"]["stores"][
             "QuoteSummaryStore"
         ]
+        timeseries_data = json.loads(json_str)["context"]["dispatcher"]["stores"][
+            "QuoteTimeSeriesStore"
+        ]
+
+        # return summary_data, timeseries_data
     except:
         return "{}"
     else:
-        # return data
-        new_data = json.dumps(data).replace("{}", "null")
-        new_data = re.sub(r"\{[\'|\"]raw[\'|\"]:(.*?),(.*?)\}", r"\1", new_data)
+        # return summary data.
+        new_summary_data = json.dumps(summary_data).replace("{}", "null")
+        new_summary_data = re.sub(
+            r"\{[\'|\"]raw[\'|\"]:(.*?),(.*?)\}", r"\1", new_summary_data
+        )
+        json_summary_data = json.loads(new_summary_data)
 
-        json_info = json.loads(new_data)
+        # return summary data.
+        new_time_data = json.dumps(timeseries_data).replace("{}", "null")
+        new_time_data = re.sub(
+            r"\{[\'|\"]raw[\'|\"]:(.*?),(.*?)\}", r"\1", new_time_data
+        )
+        json_time_data = json.loads(new_time_data)
 
-        return json_info
+        return json_summary_data, json_time_data

@@ -8,6 +8,7 @@ from jesper.scraper.yahoo_finance import (
     get_income_statement,
     get_cash_flow,
     scraper_to_statement,
+    get_stats,
 )
 
 
@@ -131,7 +132,12 @@ def annual_report_readings(stock: str):
     cf_df = get_cash_flow(stock)
 
     # Define values from various sheets.
-    values = {"totalRevenue": in_df, "ebit": in_df, "totalStockholderEquity": bs_df, "longTermDebt": bs_df}
+    values = {
+        "totalRevenue": in_df,
+        "ebit": in_df,
+        "totalStockholderEquity": bs_df,
+        "longTermDebt": bs_df,
+    }
 
     r_l = list()
     for k, v in values.items():
@@ -175,35 +181,20 @@ def intrinsic_value(
     :returns: pd.DataFrame holding all the relevant information regarding the
         intrinsic value of a specific stock.
     """
-    # Construct links based on stock acronym.
-    is_link = f"https://finance.yahoo.com/quote/{stock}/financials?p={stock}"
-    bs_link = f"https://finance.yahoo.com/quote/{stock}/balance-sheet?p={stock}"
-    cf_link = f"https://finance.yahoo.com/quote/{stock}/cash-flow?p={stock}"
-
     # Run scraping and return data frame.
-    income_df = scraper_to_statement(is_link)
-    balance_sheet_df = scraper_to_statement(bs_link)
-    cashflow_df = scraper_to_statement(cf_link)
+    balance_sheet_df = get_balance_sheet(stock)
+    income_df = get_income_statement(stock)
+    cashflow_df = get_cash_flow(stock)
 
-    # Instantiate resulting table.
+    # Construct results table.
     df = return_table()
 
-    # if len(income_df.columns) == 0 or len(balance_sheet_df.columns) == 0 or len(cashflow_df.columns) == 0:
-    #     return df
-
-    # Pulling in the desired fields ebit, depreciation & capex
-    df.at[0, "incomeBeforeTax"] = extract_latest_value(income_df, "EBIT")
-    df.at[0, "depreciation"] = extract_latest_value(
-        income_df, "Reconciled Depreciation"
-    )
-    df.at[0, "capitalExpenditures"] = extract_latest_value(
-        cashflow_df, "Capital Expenditure"
-    )
+    df.at[0, "incomeBeforeTax"] = income_df.loc["incomeBeforeTax"].iat[0]
+    df.at[0, "depreciation"] = cashflow_df.loc["depreciation"].iat[0]
+    df.at[0, "capitalExpenditures"] = cashflow_df.loc["capitalExpenditures"].iat[0]
 
     # Calculating Average Capital Expenditure.
-    cp_exp_row = cashflow_df[cashflow_df["Breakdown"] == "Capital Expenditure"]
-    mean_capex = cp_exp_row.iloc[:, 2:].mean(axis=1).astype(float)
-    df.at[0, "Average Capex"] = mean_capex.iloc[0]
+    df.at[0, "Average Capex"] = cashflow_df.loc["capitalExpenditures"].mean()
 
     # Calculating Owners Earnings
     earnings = df["incomeBeforeTax"] + df["depreciation"] - df["Average Capex"]
@@ -213,10 +204,8 @@ def intrinsic_value(
     dfc = [compound(compound_rate, y) for y in range(1, terms + 1)]
     dfd = [discount(discount_rate, y) for y in range(1, terms + 1)]
     amounts = list(map(lambda x, y: x * y, dfc, dfd))
-
     # Find the DCF Multiplier
     df["DCF_multiplier"] = sum(amounts)
-
     # Find the PV (Present Value) Multiplier
     df["PV_multiplier"] = amounts[-1] / discount_rate
 
@@ -226,10 +215,8 @@ def intrinsic_value(
     df["Intrinsic Value"] = df["OE*PV"] + df["OE*DCF"]
 
     # Find Outstanding Shares
-    df.at[0, "Outstanding Shares"] = extract_latest_value(
-        income_df, "Diluted Average Shares"
-    )
-
+    df.at[0, "Outstanding Shares"] = income_df.loc["annualDilutedAverageShares"].iat[0]
+    # Value per share.
     df["Per Share"] = df["Intrinsic Value"] / df["Outstanding Shares"]
 
     return df

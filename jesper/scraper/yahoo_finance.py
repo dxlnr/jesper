@@ -69,112 +69,227 @@ def scraper_to_latest_stock_price(link: str) -> float:
 def _parse_table(json_info):
     """."""
     df = pd.DataFrame(json_info)
-
+    # Make sure dataframe is actually fetched correctly.
     if df.empty:
         return df
-    del df["maxAge"]
+    # Delete "maxAge"
+    if "maxAge" in df:
+        del df["maxAge"]
 
+    # Use date as index & convert it to pandas datetime.
     df.set_index("endDate", inplace=True)
     df.index = pd.to_datetime(df.index, unit="s")
+    # Use only the year.
     df.index = df.index.year
 
     return df.transpose()
 
 
+def _parse_timeseries_table(json_info, name: str = "", value: str = "reportedValue"):
+    """."""
+    df = pd.DataFrame(json_info)
+    # Make sure dataframe is actually fetched correctly.
+    if df.empty:
+        return df
+
+    # Use date as index & convert it to pandas datetime.
+    if "asOfDate" in df:
+        df.set_index("asOfDate", inplace=True)
+        df.index = pd.to_datetime(df.index)
+        # Use only the year.
+        df.index = df.index.year
+
+    # Keep only the reported value.
+    df = df[[value]]
+    df = df.sort_index(ascending=False)
+    df.index.names = ["endDate"]
+
+    df = df.transpose()
+    # Rename the value to name for index name.
+    df = df.rename(index={value: name})
+    return df
+
+
 def get_balance_sheet(ticker: str, annual: bool = True):
     """Scrapes balance sheet from Yahoo Finance for an input ticker.
 
-    :param ticker:
+    :param ticker: Determines the stock.
     :param annual: Yahoo Finance offers stats annual & quarterly.
+    :returns: pandas.df containing balance shee history.
     """
     bs_link = f"https://finance.yahoo.com/quote/{ticker}/balance-sheet?p={ticker}"
-    json_info = _parse_json(bs_link)
+    # json_info = _parse_json(bs_link)
+    summary_data, timeseries_data = _parse_json(bs_link)
     try:
         if annual:
-            tmp = json_info["balanceSheetHistory"]["balanceSheetStatements"]
+            summary = summary_data["balanceSheetHistory"]["balanceSheetStatements"]
         else:
-            tmp = json_info["balanceSheetHistoryQuarterly"]["balanceSheetStatements"]
+            summary = summary_data["balanceSheetHistoryQuarterly"][
+                "balanceSheetStatements"
+            ]
     except:
-        tmp = []
+        summary = []
 
-    return _parse_table(tmp)
+    return _parse_table(summary)
 
 
 def get_income_statement(ticker: str, annual: bool = True):
     """Scrape income statement from Yahoo Finance for an input ticker.
 
-    :param ticker:
+    :param ticker: Determines the stock.
     :param annual: Yahoo Finance offers stats annual & quarterly.
+    :returns: pandas.df containing income statement history.
+    :returns: pandas.df containing historic annual diluted Shares.
     """
     in_link = f"https://finance.yahoo.com/quote/{ticker}/financials?p={ticker}"
-    json_info = _parse_json(in_link)
+    summary_data, timeseries_data = _parse_json(in_link)
 
     if annual:
-        tmp = json_info["incomeStatementHistory"]["incomeStatementHistory"]
-    else:
-        tmp = json_info["incomeStatementHistoryQuarterly"]["incomeStatementHistory"]
+        summary = summary_data["incomeStatementHistory"]["incomeStatementHistory"]
 
-    return _parse_table(tmp)
+        #  timeseries_data["timeSeries"].keys()
+        #
+        # ['trailingNetIncomeFromContinuingOperationNetMinorityInterest',
+        # 'trailingReconciledDepreciation',
+        # 'annualNetIncomeFromContinuingOperationNetMinorityInterest',
+        # 'annualNetIncomeContinuousOperations', 'annualOperatingExpense',
+        # 'trailingSellingGeneralAndAdministration',
+        # 'annualNetIncomeFromContinuingAndDiscontinuedOperation',
+        # 'trailingOtherNonOperatingIncomeExpenses', 'annualDilutedEPS',
+        # 'trailingOperatingExpense', 'annualOtherSpecialCharges', 'trailingOperatingRevenue',
+        # 'trailingNetIncomeContinuousOperations', 'annualTotalOperatingIncomeAsReported',
+        # 'annualBasicAverageShares', 'trailingNormalizedEBITDA',
+        # 'annualRestructuringAndMergernAcquisition', 'annualTaxEffectOfUnusualItems',
+        # 'annualDepreciationAndAmortizationInIncomeStatement', 'annualGeneralAndAdministrativeExpense',
+        # 'annualTaxProvision', 'annualInterestExpense', 'annualAmortization',
+        # 'trailingCostOfRevenue', 'trailingDilutedNIAvailtoComStockholders', 'trailingInterestIncome',
+        # 'trailingNetIncomeIncludingNoncontrollingInterests', 'annualBasicEPS',
+        # 'trailingTotalUnusualItems', 'annualWriteOff', 'annualTotalRevenue', 'annualTaxRateForCalcs',
+        # 'annualInterestIncome', 'annualNetIncomeCommonStockholders', 'trailingEBIT',
+        # 'annualOperatingRevenue', 'annualResearchAndDevelopment',
+        # 'annualDepreciationAmortizationDepletionIncomeStatement',
+        # 'annualOtherOperatingExpenses', 'annualGrossProfit',
+        # 'annualOtherNonOperatingIncomeExpenses', 'trailingTotalOperatingIncomeAsReported',
+        # 'annualNetIncomeIncludingNoncontrollingInterests', 'trailingSellingAndMarketingExpense',
+        # 'annualNormalizedEBITDA', 'annualSpecialIncomeCharges', 'trailingTaxEffectOfUnusualItems',
+        # 'annualReconciledDepreciation', 'trailingEBITDA', 'trailingGainOnSaleOfSecurity',
+        # 'annualNormalizedIncome', 'trailingNetInterestIncome', 'trailingNetNonOperatingInterestIncomeExpense',
+        # 'trailingTotalExpenses', 'annualAmortizationOfIntangiblesIncomeStatement',
+        # 'trailingNormalizedIncome', 'annualNetInterestIncome',
+        # 'annualNetNonOperatingInterestIncomeExpense', 'annualOtherIncomeExpense',
+        # 'trailingOtherOperatingExpenses', 'trailingGrossProfit', 'annualOperatingIncome',
+        # 'trailingNetIncomeCommonStockholders', 'trailingTaxRateForCalcs', 'annualEBIT',
+        # 'annualReconciledCostOfRevenue', 'trailingNetIncome',
+        # 'annualGainOnSaleOfSecurity', 'annualSalariesAndWages', 'trailingInterestIncomeNonOperating',
+        # 'trailingPretaxIncome', 'trailingOtherGandA', 'annualSellingAndMarketingExpense',
+        # 'trailingInterestExpense', 'annualDilutedNIAvailtoComStockholders',
+        # 'annualEarningsFromEquityInterestNetOfTax', 'annualNetIncome', 'annualPretaxIncome',
+        # 'annualTotalUnusualItems', 'annualNetIncomeExtraordinary',
+        # 'annualTotalUnusualItemsExcludingGoodwill', 'trailingTotalRevenue', 'trailingInterestExpenseNonOperating',
+        # 'annualEarningsFromEquityInterest', 'annualInterestExpenseNonOperating',
+        # 'annualCostOfRevenue', 'annualOtherunderPreferredStockDividend',
+        # 'trailingTotalUnusualItemsExcludingGoodwill', 'trailingOtherIncomeExpense',
+        # 'annualTotalExpenses', 'trailingOperatingIncome', 'annualImpairmentOfCapitalAssets',
+        # 'trailingNetIncomeFromContinuingAndDiscontinuedOperation',
+        # 'annualSellingGeneralAndAdministration', 'trailingGeneralAndAdministrativeExpense',
+        # 'annualOtherGandA', 'trailingTaxProvision', 'trailingEarningsFromEquityInterestNetOfTax',
+        # 'trailingReconciledCostOfRevenue', 'annualInterestIncomeNonOperating',
+        # 'annualDilutedAverageShares', 'annualBasicDiscontinuousOperations',
+        # 'annualDilutedDiscontinuousOperations', 'trailingBasicEPSOtherGainsLosses',
+        # 'annualProvisionForDoubtfulAccounts', 'annualMinorityInterests', 'trailingDilutedEPSOtherGainsLosses',
+        # 'annualDepletionIncomeStatement', 'annualDividendPerShare', 'trailingOtherSpecialCharges',
+        # 'annualBasicExtraordinary', 'trailingNormalizedDilutedEPS', 'annualReportedNormalizedBasicEPS',
+        # 'trailingTaxLossCarryforwardBasicEPS', 'trailingBasicExtraordinary', 'trailingSpecialIncomeCharges',
+        # 'annualDilutedExtraordinary', 'trailingSecuritiesAmortization', 'trailingBasicEPS',
+        # 'trailingProvisionForDoubtfulAccounts', 'trailingDilutedAverageShares',
+        # 'trailingSalariesAndWages', 'trailingDilutedContinuousOperations', 'trailingGainOnSaleOfBusiness',
+        # 'annualBasicAccountingChange', 'trailingEarningsFromEquityInterest', 'annualDilutedAccountingChange',
+        # 'trailingAverageDilutionEarnings', 'annualBasicContinuousOperations', 'annualTaxLossCarryforwardBasicEPS',
+        # 'annualContinuingAndDiscontinuedBasicEPS', 'trailingDilutedAccountingChange',
+        # 'trailingBasicAverageShares', 'trailingDilutedExtraordinary',
+        # 'annualDepreciationIncomeStatement', 'trailingContinuingAndDiscontinuedDilutedEPS',
+        # 'trailingBasicDiscontinuousOperations', 'trailingDilutedDiscontinuousOperations',
+        # 'trailingPreferredStockDividends', 'annualOtherTaxes', 'annualRentExpenseSupplemental',
+        # 'trailingNetIncomeFromTaxLossCarryforward', 'trailingTotalOtherFinanceCost',
+        # 'trailingAmortization', 'trailingAmortizationOfIntangiblesIncomeStatement',
+        # 'trailingInsuranceAndClaims', 'annualExciseTaxes', 'trailingImpairmentOfCapitalAssets',
+        # 'trailingRentExpenseSupplemental', 'trailingNetIncomeExtraordinary', 'annualSecuritiesAmortization',
+        # 'annualTaxLossCarryforwardDilutedEPS', 'annualNormalizedDilutedEPS', 'trailingGainOnSaleOfPPE',
+        # 'annualReportedNormalizedDilutedEPS', 'trailingReportedNormalizedBasicEPS',
+        # 'trailingMinorityInterests', 'trailingTaxLossCarryforwardDilutedEPS', 'trailingWriteOff',
+        # 'trailingDepreciationIncomeStatement', 'annualPreferredStockDividends', 'annualNormalizedBasicEPS',
+        # 'trailingDepreciationAmortizationDepletionIncomeStatement', 'annualInsuranceAndClaims',
+        # 'trailingRentAndLandingFees', 'trailingNetIncomeDiscontinuousOperations',
+        # 'annualBasicEPSOtherGainsLosses', 'annualRentAndLandingFees',
+        # 'annualNetIncomeDiscontinuousOperations', 'trailingBasicContinuousOperations',
+        # 'annualTotalOtherFinanceCost', 'annualContinuingAndDiscontinuedDilutedEPS',
+        # 'trailingDepreciationAndAmortizationInIncomeStatement', 'annualDilutedContinuousOperations',
+        # 'trailingOtherunderPreferredStockDividend', 'annualDilutedEPSOtherGainsLosses',
+        # 'trailingBasicAccountingChange', 'trailingContinuingAndDiscontinuedBasicEPS',
+        # 'trailingNormalizedBasicEPS', 'trailingReportedNormalizedDilutedEPS',
+        # 'trailingDepletionIncomeStatement', 'trailingDividendPerShare', 'trailingExciseTaxes',
+        # 'trailingRestructuringAndMergernAcquisition', 'annualGainOnSaleOfPPE', 'trailingResearchAndDevelopment',
+        # 'annualGainOnSaleOfBusiness', 'annualAverageDilutionEarnings', 'trailingOtherTaxes',
+        # 'trailingDilutedEPS', 'annualNetIncomeFromTaxLossCarryforward', 'timestamp']
+        #
+        timeseries = timeseries_data["timeSeries"]
+
+        # Extract annual_shares
+        annual_diluted_shares = timeseries["annualDilutedAverageShares"]
+    else:
+        summary = summary_data["incomeStatementHistoryQuarterly"][
+            "incomeStatementHistory"
+        ]
+
+    df = pd.concat(
+        [
+            _parse_table(summary),
+            _parse_timeseries_table(
+                annual_diluted_shares, name="annualDilutedAverageShares"
+            ),
+        ]
+    )
+    return df
 
 
 def get_cash_flow(ticker: str, annual: bool = True):
     """Scrapes the cash flow statement from Yahoo Finance for an input ticker.
 
+    :param ticker: Determines the stock.
+    :param annual: Yahoo Finance offers stats annual & quarterly.
+    :returns: pandas.df containing cashflow statement history.
+    """
+    cf_link = f"https://finance.yahoo.com/quote/{ticker}/cash-flow?p={ticker}"
+    summary_data, _ = _parse_json(cf_link)
+
+    if annual:
+        summary = summary_data["cashflowStatementHistory"]["cashflowStatements"]
+    else:
+        summary = summary_data["cashflowStatementHistoryQuarterly"][
+            "cashflowStatements"
+        ]
+
+    return _parse_table(summary)
+
+
+def get_stats(ticker, headers={"User-agent": "Mozilla/5.0"}):
+    """
     :param ticker:
     :param annual: Yahoo Finance offers stats annual & quarterly.
     """
-    cf_link = f"https://finance.yahoo.com/quote/{ticker}/cash-flow?p={ticker}"
-    json_info = _parse_json(cf_link)
+    stats_site = f"https://finance.yahoo.com/quote/{ticker}/key-statistics?p={ticker}"
 
-    if annual:
-        tmp = json_info["cashflowStatementHistory"]["cashflowStatements"]
-    else:
-        tmp = json_info["cashflowStatementHistoryQuarterly"]["cashflowStatements"]
+    tables = pd.read_html(requests.get(stats_site, headers=headers).text)
+    tables = [table for table in tables[1:] if table.shape[1] == 2]
 
-    return _parse_table(tmp)
+    table = tables[0]
+    for elt in tables[1:]:
+        table = table.append(elt)
 
+    table.columns = ["Attribute", "Value"]
+    table = table.reset_index(drop=True)
 
-def get_balance_sheet_from_yfinance_web(ticker):
-    from datetime import datetime
-    url = f"https://finance.yahoo.com/quote/{ticker}/balance-sheet?p={ticker}"
-    header = {'Connection': 'keep-alive',
-                'Expires': '-1',
-                'Upgrade-Insecure-Requests': '1',
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) \
-                AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36'
-                }
-
-    r = requests.get(url, headers=header)
-    html = r.text
-    soup = BeautifulSoup(html, "html.parser")
-
-    div = soup.find_all('div', attrs={'class': 'D(tbhg)'})
-    if len(div) < 1:
-        print("Fail to retrieve table column header")
-        exit(0)
-
-    col = []
-    for h in div[0].find_all('span'):
-        text = h.get_text()
-        if text != "Breakdown":
-            col.append(datetime.strptime(text, "%m/%d/%Y"))
-
-    df = pd.DataFrame(columns=col)
-    for div in soup.find_all('div', attrs={'data-test': 'fin-row'}):
-        i = 0
-        idx = ""
-        val = []
-        for h in div.find_all('span'):
-            if i == 0:
-                idx = h.get_text()
-            else:
-                num = int(h.get_text().replace(",", "")) * 1000
-                val.append( num )
-            i += 1
-        row = pd.DataFrame([val], columns=col, index=[idx] )
-        df = df.append(row)
-
-    return df
+    return table
 
 
 def extract_latest_value(df: pd.DataFrame, v_name: str) -> float:
@@ -183,7 +298,7 @@ def extract_latest_value(df: pd.DataFrame, v_name: str) -> float:
         if isinstance(num := extract_k_value(df, k, v_name), float):
             return num
 
-    raise Exception(f"No \'{v_name}\' value found.")
+    raise Exception(f"No '{v_name}' value found.")
 
 
 def extract_k_value(df: pd.DataFrame, v_key: str, v_name: str) -> float:
