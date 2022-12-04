@@ -31,12 +31,20 @@ def main():
 
     # test = ['A', 'AAL', 'AAP', 'AAPL', 'ABBV', 'ABC', 'ABMD', 'ABT', 'ACGL', 'ACN']
     # Get list of ticker symbols of all s&p 500 stocks.
-    # sp500 = tickers_sp500()
-    test = ['A']
+    sp500 = tickers_sp500()
+    # from jesper.scraper.yahoo_finance import get_company_info
+    # ci_df = get_company_info("AAPL")
+    # print(ci_df)
+
+    tsm = ['TSM']
+    test = ['CMG']
+    import random
+    tests = random.sample(sp500, 100)
     # Calculate evaluation facilitating value based investing.
+    # df = eval_value_based_stocks(sp500[:75])
     df = eval_value_based_stocks(test)
     # Apply styling for highlighting outstanding values.
-    df = df.round({"intrinsic value": 2})
+    df['intrinsic value'] = df['intrinsic value'].astype(float).round(2)
     df["safety margin"] = df["safety margin"].apply(color_low_safety_margin_green)
     # Print final results.
     print("\n", df, "\n")

@@ -21,10 +21,10 @@ print(readable_df(df))
 from jesper.eval_sheet import eval_value_based_stocks
 
 # Calculate evaluation facilitating value based investing.
-df = eval_value_based_stocks(sp500[:10])
+df = eval_value_based_stocks(['AAPL', 'META'])
 
 # Apply styling for highlighting outstanding values.
-df = df.round({'intrinsic value': 2})
+df['intrinsic value'] = df['intrinsic value'].astype(float).round(2)
 df["safety margin"] = df["safety margin"].apply(color_low_safety_margin_green)
 
 # Print the final results.

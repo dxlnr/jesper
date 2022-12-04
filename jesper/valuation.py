@@ -9,7 +9,7 @@ from jesper.scraper.yahoo_finance import (
 )
 
 
-def return_table(
+def _return_table(
     headers: List[str] = [
         "incomeBeforeTax",
         "depreciation",
@@ -108,14 +108,26 @@ def intrinsic_value(
     cashflow_df = get_cash_flow(stock)
 
     # Construct results table.
-    df = return_table()
+    df = _return_table()
 
-    df.at[0, "incomeBeforeTax"] = income_df.loc["incomeBeforeTax"].iat[0]
-    df.at[0, "depreciation"] = cashflow_df.loc["depreciation"].iat[0]
-    df.at[0, "capitalExpenditures"] = cashflow_df.loc["capitalExpenditures"].iat[0]
+    try:
+        df.at[0, "incomeBeforeTax"] = income_df.loc["incomeBeforeTax"].iat[0]
+    except:
+        df.at[0, "incomeBeforeTax"] = None
+    try:
+        df.at[0, "depreciation"] = cashflow_df.loc["depreciation"].iat[0]
+    except:
+        df.at[0, "depreciation"] = None
+    try:
+        df.at[0, "capitalExpenditures"] = cashflow_df.loc["capitalExpenditures"].iat[0]
+    except:
+        df.at[0, "capitalExpenditures"] = None
 
     # Calculating Average Capital Expenditure.
-    df.at[0, "Average Capex"] = cashflow_df.loc["capitalExpenditures"].mean()
+    try:
+        df.at[0, "Average Capex"] = cashflow_df.loc["capitalExpenditures"].mean()
+    except:
+        df.at[0, "Average Capex"] = None
 
     # Calculating Owners Earnings
     earnings = df["incomeBeforeTax"] + df["depreciation"] - df["Average Capex"]
@@ -136,7 +148,11 @@ def intrinsic_value(
     df["Intrinsic Value"] = df["OE*PV"] + df["OE*DCF"]
 
     # Find Outstanding Shares
-    df.at[0, "Outstanding Shares"] = income_df.loc["annualDilutedAverageShares"].iat[0]
+    try:
+        df.at[0, "Outstanding Shares"] = income_df.loc["annualDilutedAverageShares"].iat[0]
+    except:
+        df.at[0, "Outstanding Shares"] = None
+
     # Value per share.
     df["Per Share"] = df["Intrinsic Value"] / df["Outstanding Shares"]
 
