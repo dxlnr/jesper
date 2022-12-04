@@ -1,6 +1,5 @@
 """Yahoo Finance Scraping functions"""
 import pandas as pd
-import requests
 
 from jesper.scraper import get_event_page
 from jesper.scraper.scraper import _parse_page_content_as_json
@@ -64,6 +63,9 @@ def _parse_timeseries_table(
     """."""
     table = [_create_empty_timeseries_dict() if t is None else t for t in table]
     df = pd.DataFrame(table)
+
+    # Make sure every date is set and not NaN.
+    df['asOfDate'] = pd.date_range(start=df['asOfDate'].iat[0], periods=4, freq='Y')
     # Make sure dataframe is actually fetched correctly.
     if df.empty:
         return df
@@ -322,6 +324,7 @@ def get_income_statement(ticker: str, annual: bool = True):
         # Extract annual_shares
         try:
             annual_diluted_shares = timeseries["annualDilutedAverageShares"]
+            print(annual_diluted_shares)
         except:
             annual_diluted_shares = None
     else:
@@ -363,38 +366,38 @@ def get_cash_flow(ticker: str, annual: bool = True):
     return _convert_json_to_pd(summary)
 
 
-def get_company_info(ticker: str):
-    """Scrape the company information for a ticker.
-
-    :param ticker: Determines the stock.
-    """
-    profile_url = f"https://finance.yahoo.com/quote/{ticker}/profile?p={ticker}"
-    #
-    json_info = _parse_page_content_as_json(profile_url)
-    json_info = json_info["assetProfile"]
-    info_frame = pd.DataFrame.from_dict(json_info,
-                                        orient="index",
-                                        columns=["Value"])
-    info_frame = info_frame.drop("companyOfficers", axis="index")
-    info_frame.index.name = "Breakdown"
-    return info_frame
-
-
-def get_stats(ticker, headers={"User-agent": "Mozilla/5.0"}):
-    """
-    :param ticker: Determines the stock.
-    :param annual: Yahoo Finance offers stats annual & quarterly.
-    """
-    stats_site = f"https://finance.yahoo.com/quote/{ticker}/key-statistics?p={ticker}"
-
-    tables = pd.read_html(requests.get(stats_site, headers=headers).text)
-    tables = [table for table in tables[1:] if table.shape[1] == 2]
-
-    table = tables[0]
-    for elt in tables[1:]:
-        table = table.append(elt)
-
-    table.columns = ["Attribute", "Value"]
-    table = table.reset_index(drop=True)
-
-    return table
+# def get_company_info(ticker: str):
+#     """Scrape the company information for a ticker.
+#
+#     :param ticker: Determines the stock.
+#     """
+#     profile_url = f"https://finance.yahoo.com/quote/{ticker}/profile?p={ticker}"
+#     #
+#     json_info = _parse_page_content_as_json(profile_url)
+#     json_info = json_info["assetProfile"]
+#     info_frame = pd.DataFrame.from_dict(json_info,
+#                                         orient="index",
+#                                         columns=["Value"])
+#     info_frame = info_frame.drop("companyOfficers", axis="index")
+#     info_frame.index.name = "Breakdown"
+#     return info_frame
+#
+#
+# def get_stats(ticker, headers={"User-agent": "Mozilla/5.0"}):
+#     """
+#     :param ticker: Determines the stock.
+#     :param annual: Yahoo Finance offers stats annual & quarterly.
+#     """
+#     stats_site = f"https://finance.yahoo.com/quote/{ticker}/key-statistics?p={ticker}"
+#
+#     tables = pd.read_html(requests.get(stats_site, headers=headers).text)
+#     tables = [table for table in tables[1:] if table.shape[1] == 2]
+#
+#     table = tables[0]
+#     for elt in tables[1:]:
+#         table = table.append(elt)
+#
+#     table.columns = ["Attribute", "Value"]
+#     table = table.reset_index(drop=True)
+#
+#     return table

@@ -30,6 +30,20 @@ def eval_value_based_stocks(
 ):
     """Reads in a list of stock ticker symbols and spits out the evaluation
     useful for value based investing.
+
+    :param stocks: List of stocks that should be evaluated.
+    :param compound_rate:
+    :param discount_rate:
+    :param terms:
+    :returns pd.DataFrame:
+        Table that holds holds the intrinsic value and compares to current price.
+                intrinsic value latest stock price    safety margin
+        stock
+        LW              148.64              87.73  59.02%
+        AXP             545.93             156.75  28.71%
+        ON              159.58              73.04  45.77%
+        SLB             135.73              52.79  38.89%
+        EQR             180.27              64.11  35.56%
     """
     # Instantiate resulting table.
     df = create_eval_table()

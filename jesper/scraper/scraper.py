@@ -57,7 +57,7 @@ def _parse_page_content_as_json(
         )
         json_summary_data = json.loads(new_summary_data)
 
-        # return summary data.
+        # return timeseries data.
         new_time_data = json.dumps(timeseries_data).replace("{}", "null")
         new_time_data = re.sub(
             r"\{[\'|\"]raw[\'|\"]:(.*?),(.*?)\}", r"\1", new_time_data
