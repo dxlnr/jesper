@@ -136,7 +136,7 @@ def _parse_timeseries_table(
     return df
 
 
-def get_financial_df(ticker: str, workers: int = 3) -> pd.DataFrame:
+def get_financial_info(ticker: str, workers: int = 3) -> pd.DataFrame:
     """Scrape the balance sheet, financial statement & cashflow of specific stock
     and return it as one dataframe.
 
@@ -467,40 +467,3 @@ def scraper_to_latest_stock_price(url: str) -> float:
     price = price.replace(",", "")
 
     return float(price)
-
-
-# def get_company_info(ticker: str):
-#     """Scrape the company information for a ticker.
-#
-#     :param ticker: Determines the stock.
-#     """
-#     profile_url = f"https://finance.yahoo.com/quote/{ticker}/profile?p={ticker}"
-#     #
-#     json_info = _parse_page_content_as_json(profile_url)
-#     json_info = json_info["assetProfile"]
-#     info_frame = pd.DataFrame.from_dict(json_info,
-#                                         orient="index",
-#                                         columns=["Value"])
-#     info_frame = info_frame.drop("companyOfficers", axis="index")
-#     info_frame.index.name = "Breakdown"
-#     return info_frame
-#
-#
-# def get_stats(ticker, headers={"User-agent": "Mozilla/5.0"}):
-#     """
-#     :param ticker: Determines the stock.
-#     :param annual: Yahoo Finance offers stats annual & quarterly.
-#     """
-#     stats_site = f"https://finance.yahoo.com/quote/{ticker}/key-statistics?p={ticker}"
-#
-#     tables = pd.read_html(requests.get(stats_site, headers=headers).text)
-#     tables = [table for table in tables[1:] if table.shape[1] == 2]
-#
-#     table = tables[0]
-#     for elt in tables[1:]:
-#         table = table.append(elt)
-#
-#     table.columns = ["Attribute", "Value"]
-#     table = table.reset_index(drop=True)
-#
-#     return table

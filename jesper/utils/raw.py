@@ -3,7 +3,16 @@ import os
 
 import pandas as pd
 
+from jesper.scraper.yahoo_finance import get_financial_info
 from jesper.utils import get_project_root
+
+
+def save_stocks_finance_info(stocks: list[str]):
+    """."""
+    for idx, stock in enumerate(stocks):
+        print(f"({idx+1}) Scraping financial information for {stock}.")
+        df = get_financial_info(stock)
+        save_statements_to_csv(df, stock)
 
 
 def save_statements_to_csv(df: pd.DataFrame, stock: str):
@@ -19,7 +28,7 @@ def save_statements_to_csv(df: pd.DataFrame, stock: str):
         new_df.to_csv(fpath)
     else:
         df.to_csv(fpath)
-    print(f"Saved financials of {stock} to {fpath}.")
+    print(f"Saved financial information of {stock} to {fpath}.")
 
 
 def _fill_df(df: pd.DataFrame, pre_df: pd.DataFrame) -> pd.DataFrame:

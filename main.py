@@ -29,37 +29,15 @@ def main():
     # Sono Group N.V. (SEV)
     # stock = "SEV"
 
-    # ticker = "NVDA"
-    # url = f"https://finance.yahoo.com/quote/{ticker}/financials?p={ticker}"
-    # from jesper.scraper.scraper import get_request_url
-    # print(type(get_request_url(url)))
-    # print(get_request_url(url))
-
-    # import pandas as pd
-    # from jesper.scraper.yahoo_finance import get_balance_sheet, get_income_statement, get_cash_flow
-    # from jesper.utils.raw import save_statements_to_csv
-    # stock = "AMD"
-    #
-    # balance_sheet_df = get_balance_sheet(stock)
-    # income_df = get_income_statement(stock)
-    # cashflow_df = get_cash_flow(stock)
-    # # print(balance_sheet_df)
-    # # print(income_df)
-    # # print(cashflow_df)
-    # save_df = pd.concat([balance_sheet_df, income_df, cashflow_df])
-    #
-    # save_statements_to_csv(save_df, stock)
-
-    from jesper.scraper.yahoo_finance import get_financial_statements, get_financial_info
-    stock = "AMD"
+    from jesper.utils.raw import save_stocks_finance_info
+    # Get list of ticker symbols of all s&p 500 stocks.
+    sp500 = tickers_sp500()
     # print(get_financial_statements(stock, "balance-sheet"))
-    df = get_financial_info(stock)
-    print(df)
+    save_stocks_finance_info(sp500[:25])
 
     # tsm = ['TSM', 'AMD']
     # test = ['AAPL']
-    # # Get list of ticker symbols of all s&p 500 stocks.
-    # sp500 = tickers_sp500()
+
     # import random
     # tests = random.sample(sp500, 20)
     # # Calculate evaluation facilitating value based investing.
