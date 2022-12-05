@@ -28,8 +28,6 @@ def main():
     #
     # Sono Group N.V. (SEV)
     # stock = "SEV"
-    from jesper.utils import get_project_root
-    print(get_project_root())
 
     import pandas as pd
     from jesper.scraper.yahoo_finance import get_balance_sheet, get_income_statement, get_cash_flow

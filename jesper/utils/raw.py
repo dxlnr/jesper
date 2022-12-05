@@ -9,11 +9,11 @@ from jesper.utils import get_project_root
 def save_statements_to_csv(df: pd.DataFrame, stock: str):
     """Saves statements DataFrames to .csv"""
     # Construct file path.
-    fpath = os.path.join(get_project_root(), "data/fundamentalData", f'{stock}.csv')
+    fpath = os.path.join(get_project_root(), "data/fundamentalData", f"{stock}.csv")
     print(fpath)
     print(df)
     print("")
-    with open(fpath, mode='a+') as cs:
+    with open(fpath, mode="a+") as cs:
         # pre_df = pd.read_csv(fpath, index_col=0, na_values='(missing)')
         # print(pre_df)
 
@@ -23,21 +23,20 @@ def save_statements_to_csv(df: pd.DataFrame, stock: str):
 
 def _fill_df(df: pd.DataFrame, pre_df: pd.DataFrame) -> pd.DataFrame:
     """Compares two pandas DataFrame & fills in the missing information."""
-    # newdf = pd.concat([df, pre_df]).drop_duplicates(keep=True)
-    c_headers = sorted(list(set(list(pre_df.columns)) | set(list(df.columns))), reverse=True)
-    # c_headers = pre_df.columns.join(df.columns).drop_duplicates(keep=False)
-    # c_headers = pd.concat([df.columns, pre_df.columns]).drop_duplicates(keep=False)
-    c_h = pre_df.columns.intersection(df.columns)
-    pre_h = pre_df.columns.difference(df.columns)
-    new_h = df.columns.difference(pre_df.columns)
-    print("HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH ", c_headers)
-    print("c h ", c_h)
-    print("pre h ", pre_h)
-    print("new h ", new_h)
+    # Append new rows.
+    for r in df.index.difference(pre_df.index):
+        pass
+        # pre_df = pd.concat([pre_df, df], ignore_index = True)
 
+    # Scan for differences and overwrite a new value.
+    for row in pre_df.itertuples():
+        for k in pre_df.keys():
+            if (row.Index in df.index) and (k in df.columns):
+                pre_df.at[row.Index, k] = df.loc[row.Index][k]
+
+    # Append new column
     for c in df.columns.difference(pre_df.columns):
         pre_df[c] = df[c]
-    # pre_df[new_h[0]] = df[new_h[0]]
 
-    new_df = pre_df
-    return new_df
+    # Sort the columns & return.
+    return pre_df.reindex(sorted(pre_df.columns, reverse=True), axis=1)

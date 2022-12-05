@@ -149,7 +149,9 @@ def intrinsic_value(
 
     # Find Outstanding Shares
     try:
-        df.at[0, "Outstanding Shares"] = income_df.loc["annualDilutedAverageShares"].iat[0]
+        df.at[0, "Outstanding Shares"] = income_df.loc[
+            "annualDilutedAverageShares"
+        ].iat[0]
     except:
         df.at[0, "Outstanding Shares"] = None
 

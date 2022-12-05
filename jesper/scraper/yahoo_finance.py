@@ -65,7 +65,7 @@ def _parse_timeseries_table(
     df = pd.DataFrame(table)
 
     # Make sure every date is set and not NaN.
-    df['asOfDate'] = pd.date_range(start=df['asOfDate'].iat[0], periods=4, freq='Y')
+    df["asOfDate"] = pd.date_range(start=df["asOfDate"].iat[0], periods=4, freq="Y")
     # Make sure dataframe is actually fetched correctly.
     if df.empty:
         return df

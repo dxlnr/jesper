@@ -32,7 +32,10 @@ def test_fill_df():
     )
 
     print("PRE DF: \n", pre_df)
-
+    print("")
+    print("DF: \n", df)
+    print("")
+    print("-------------------------------------------")
     # Get the merged DataFrame from the tested function.
     new_df = _fill_df(df, pre_df)
     print("")
@@ -51,4 +54,7 @@ def test_fill_df():
         index=["totalLiab", "totalStockholderEquity", "commonStock", "issuanceOfStock"],
     )
 
-    assert_frame_equal(new_df, goal_df)
+    print("")
+    print("GOAL DF: \n", goal_df)
+
+    assert_frame_equal(new_df.astype(float), goal_df.astype(float))
