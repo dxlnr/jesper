@@ -2,27 +2,19 @@
 import json
 import multiprocessing
 import re
+from itertools import repeat
 
+import backoff
 import pandas as pd
 
 from jesper.scraper import get_event_page, get_request_url
 
-
-def scraper_to_latest_stock_price(url: str) -> float:
-    """Scrape yahoo finance for latest stock price.
-
-    :param url: API endpoint as str.
-    """
-    # Scrape raw data for parsing.
-    page_content = get_event_page(url)
-    # Get closing price.
-    price = page_content.find(
-        "fin-streamer", {"class": "Fw(b) Fz(36px) Mb(-4px) D(ib)"}
-    ).text
-    # Make sure there is no problem with commata.
-    price = price.replace(",", "")
-
-    return float(price)
+# Keys to summary data based on sublink keys.
+FIN_KEYS = {
+    "balance-sheet": ["balanceSheetHistory", "balanceSheetStatements"],
+    "financials": ["incomeStatementHistory", "incomeStatementHistory"],
+    "cash-flow": ["cashflowStatementHistory", "cashflowStatements"],
+}
 
 
 def _create_empty_timeseries_dict() -> dict:
@@ -76,6 +68,24 @@ def _parse_page_content_as_json(
         return json_summary_data, json_time_data
 
 
+@backoff.on_predicate(backoff.fibo, lambda x: x == "{}", max_value=13)
+def _parse_page_summary_as_json(json_str: str):
+    """Parsing the page summary from single str."""
+    try:
+        summary_data = json.loads(json_str)["context"]["dispatcher"]["stores"][
+            "QuoteSummaryStore"
+        ]
+    except:
+        return "{}"
+    else:
+        # return summary data after cleaning.
+        new_summary_data = json.dumps(summary_data).replace("{}", "null")
+        new_summary_data = re.sub(
+            r"\{[\'|\"]raw[\'|\"]:(.*?),(.*?)\}", r"\1", new_summary_data
+        )
+        return json.loads(new_summary_data)
+
+
 def _convert_json_to_pd(json_info):
     """."""
     df = pd.DataFrame(json_info)
@@ -126,27 +136,43 @@ def _parse_timeseries_table(
     return df
 
 
-def get_financial_info(ticker: str, workers: int = 4):
-    """."""
+def get_financial_df(ticker: str, workers: int = 3) -> pd.DataFrame:
+    """Scrape the balance sheet, financial statement & cashflow of specific stock
+    and return it as one dataframe.
+
+    :param ticker: Determines the stock.
+    :param workers: A number of worker processes to which jobs can be submitted.
+    """
     with multiprocessing.Pool(processes=workers) as pool:
-        for json_str in pool.map(
-            get_request_url,
-            [
-                f"https://finance.yahoo.com/quote/{ticker}/balance-sheet?p={ticker}",
-                f"https://finance.yahoo.com/quote/{ticker}/financials?p={ticker}",
-                f"https://finance.yahoo.com/quote/{ticker}/cash-flow?p={ticker}",
-            ],
-        ):
-            print(json_str)
+        dfs = pool.starmap(
+            get_income_statement, zip(repeat(ticker), list(FIN_KEYS.keys()))
+        )
+    return pd.concat(dfs)
 
 
-@backoff.on_predicate(backoff.fibo, lambda x: x == [], max_value=13)
-def get_financial_statements(json_str: str, fromkeys: list[str]):
-    """Wrapper for getting the financial statements."""
+def get_financial_statements(ticker: str, sublink: str) -> pd.DataFrame:
+    """Wrapper for getting the financial statements for specific stock.
+
+    :param ticker: Determines the stock.
+    :param sublink:
+    """
+    assert sublink in [
+        "balance-sheet",
+        "financials",
+        "cash-flow",
+    ], f"{sublink}: Leads to an unkown page error on yahoo-finance."
+    # Construct url.
+    url = f"https://finance.yahoo.com/quote/{ticker}/{sublink}?p={ticker}"
+    # Fetch all the information.
+    json_str = get_request_url(url)
+    # Filter the summary information.
+    summary_data = _parse_page_summary_as_json(json_str)
+    # Extract the relevant information & convert to pandas DataFrame.
     try:
-        return summary_data[fromkeys[0]][fromkeys[1]]
+        summary = summary_data[FIN_KEYS[sublink][0]][FIN_KEYS[sublink][1]]
     except:
-        return []
+        summary = []
+    return _convert_json_to_pd(summary)
 
 
 def get_balance_sheet(ticker: str, annual: bool = True):
@@ -385,7 +411,6 @@ def get_income_statement(ticker: str, annual: bool = True):
         # Extract annual_shares
         try:
             annual_diluted_shares = timeseries["annualDilutedAverageShares"]
-            print(annual_diluted_shares)
         except:
             annual_diluted_shares = None
     else:
@@ -425,6 +450,23 @@ def get_cash_flow(ticker: str, annual: bool = True):
         ]
 
     return _convert_json_to_pd(summary)
+
+
+def scraper_to_latest_stock_price(url: str) -> float:
+    """Scrape yahoo finance for latest stock price.
+
+    :param url: API endpoint as str.
+    """
+    # Scrape raw data for parsing.
+    page_content = get_event_page(url)
+    # Get closing price.
+    price = page_content.find(
+        "fin-streamer", {"class": "Fw(b) Fz(36px) Mb(-4px) D(ib)"}
+    ).text
+    # Make sure there is no problem with commata.
+    price = price.replace(",", "")
+
+    return float(price)
 
 
 # def get_company_info(ticker: str):

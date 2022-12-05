@@ -10,15 +10,16 @@ def save_statements_to_csv(df: pd.DataFrame, stock: str):
     """Saves statements DataFrames to .csv"""
     # Construct file path.
     fpath = os.path.join(get_project_root(), "data/fundamentalData", f"{stock}.csv")
-    print(fpath)
-    print(df)
-    print("")
-    with open(fpath, mode="a+") as cs:
-        # pre_df = pd.read_csv(fpath, index_col=0, na_values='(missing)')
-        # print(pre_df)
 
-        # df = pd.read_csv(cs, names=['ID','CODE'])
+    # Check if file already exists.
+    if os.path.exists(fpath):
+        pre_df = pd.read_csv(fpath, index_col=0, na_values='(missing)')
+        new_df = _fill_df(df, pre_df)
+
+        new_df.to_csv(fpath)
+    else:
         df.to_csv(fpath)
+    print(f"Saved financials of {stock} to {fpath}.")
 
 
 def _fill_df(df: pd.DataFrame, pre_df: pd.DataFrame) -> pd.DataFrame:
