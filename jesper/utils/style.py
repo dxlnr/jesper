@@ -1,7 +1,8 @@
 """Styling Helper for Printing."""
-from typing import List
-import colorama
 import math
+from typing import List
+
+import colorama
 
 
 def pd_color_low_safety_margin_green(val):

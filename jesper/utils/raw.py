@@ -25,8 +25,7 @@ def _fill_df(df: pd.DataFrame, pre_df: pd.DataFrame) -> pd.DataFrame:
     """Compares two pandas DataFrame & fills in the missing information."""
     # Append new rows.
     for r in df.index.difference(pre_df.index):
-        pass
-        # pre_df = pd.concat([pre_df, df], ignore_index = True)
+        pre_df.loc[r] = df.loc[r]
 
     # Scan for differences and overwrite a new value.
     for row in pre_df.itertuples():

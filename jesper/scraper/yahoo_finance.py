@@ -1,8 +1,11 @@
 """Yahoo Finance Scraping functions"""
+import json
+import multiprocessing
+import re
+
 import pandas as pd
 
-from jesper.scraper import get_event_page
-from jesper.scraper.scraper import _parse_page_content_as_json
+from jesper.scraper import get_event_page, get_request_url
 
 
 def scraper_to_latest_stock_price(url: str) -> float:
@@ -36,6 +39,41 @@ def _create_empty_timeseries_dict() -> dict:
     return dict.fromkeys(
         ["dataId", "asOfDate", "periodType", "currencyCode", "reportedValue"]
     )
+
+
+def _parse_page_content_as_json(
+    url: str,
+    headers: dict[str, str] = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36\
+     (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36"
+    },
+):
+    json_str = get_request_url(url)
+    try:
+        summary_data = json.loads(json_str)["context"]["dispatcher"]["stores"][
+            "QuoteSummaryStore"
+        ]
+        timeseries_data = json.loads(json_str)["context"]["dispatcher"]["stores"][
+            "QuoteTimeSeriesStore"
+        ]
+    except:
+        return "{}"
+    else:
+        # return summary data.
+        new_summary_data = json.dumps(summary_data).replace("{}", "null")
+        new_summary_data = re.sub(
+            r"\{[\'|\"]raw[\'|\"]:(.*?),(.*?)\}", r"\1", new_summary_data
+        )
+        json_summary_data = json.loads(new_summary_data)
+
+        # return timeseries data.
+        new_time_data = json.dumps(timeseries_data).replace("{}", "null")
+        new_time_data = re.sub(
+            r"\{[\'|\"]raw[\'|\"]:(.*?),(.*?)\}", r"\1", new_time_data
+        )
+        json_time_data = json.loads(new_time_data)
+
+        return json_summary_data, json_time_data
 
 
 def _convert_json_to_pd(json_info):
@@ -86,6 +124,29 @@ def _parse_timeseries_table(
     # Rename the value to name for index name.
     df = df.rename(index={value: name})
     return df
+
+
+def get_financial_info(ticker: str, workers: int = 4):
+    """."""
+    with multiprocessing.Pool(processes=workers) as pool:
+        for json_str in pool.map(
+            get_request_url,
+            [
+                f"https://finance.yahoo.com/quote/{ticker}/balance-sheet?p={ticker}",
+                f"https://finance.yahoo.com/quote/{ticker}/financials?p={ticker}",
+                f"https://finance.yahoo.com/quote/{ticker}/cash-flow?p={ticker}",
+            ],
+        ):
+            print(json_str)
+
+
+@backoff.on_predicate(backoff.fibo, lambda x: x == [], max_value=13)
+def get_financial_statements(json_str: str, fromkeys: list[str]):
+    """Wrapper for getting the financial statements."""
+    try:
+        return summary_data[fromkeys[0]][fromkeys[1]]
+    except:
+        return []
 
 
 def get_balance_sheet(ticker: str, annual: bool = True):

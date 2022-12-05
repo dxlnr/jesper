@@ -8,53 +8,80 @@ from jesper.utils.raw import _fill_df
 def test_fill_df():
     """."""
     # The previous DataFrame
-    pre_d = {
+    base_d = {
         "2021": [302083, 50672, 64849, None],
         "2020": [287912, 63090, 57365, None],
         "2019": [258549, 65339, 50779, None],
         "2018": [248028, 90488, 45174, 781],
     }
-    pre_df = pd.DataFrame(
-        data=pre_d,
+    base_df = pd.DataFrame(
+        data=base_d,
         index=["totalLiab", "totalStockholderEquity", "commonStock", "issuanceOfStock"],
     )
 
-    # The current DataFrame.
-    d = {
+    # The DataFrames that will overwrite the baseline df.
+    d1 = {
         "2022": [329870, 48205, 70349, 900],
         "2021": [302083, 50672, 64849, 822],
         "2020": [287912, 63090, 57365, None],
         "2019": [258549, 65339, 50779, None],
     }
-    df = pd.DataFrame(
-        data=d,
+    df1 = pd.DataFrame(
+        data=d1,
         index=["totalLiab", "totalStockholderEquity", "commonStock", "issuanceOfStock"],
     )
 
-    print("PRE DF: \n", pre_df)
-    print("")
-    print("DF: \n", df)
-    print("")
-    print("-------------------------------------------")
-    # Get the merged DataFrame from the tested function.
-    new_df = _fill_df(df, pre_df)
-    print("")
-    print("NEW DF: \n", new_df)
+    d2 = {
+        "2022": [329870, 48205, 70349, 900, 352755],
+        "2021": [302083, 50672, 64849, 822, 351002],
+        "2020": [287912, 63090, 57365, None, 323888],
+        "2019": [258549, 65339, 50779, None, 338516],
+    }
+    df2 = pd.DataFrame(
+        data=d2,
+        index=[
+            "totalLiab",
+            "totalStockholderEquity",
+            "commonStock",
+            "issuanceOfStock",
+            "totalAssets",
+        ],
+    )
 
-    # Construct the aimed for DataFrame.
-    goal_d = {
+    # Get the merged DataFrame from the tested function.
+    new_df1 = _fill_df(df1, base_df)
+    new_df2 = _fill_df(df2, base_df)
+
+    # Construct the aimed for DataFrames.
+    goal_d1 = {
         "2022": [329870, 48205, 70349, 900],
         "2021": [302083, 50672, 64849, 822],
         "2020": [287912, 63090, 57365, None],
         "2019": [258549, 65339, 50779, None],
         "2018": [248028, 90488, 45174, 781],
     }
-    goal_df = pd.DataFrame(
-        data=goal_d,
+    goal_df1 = pd.DataFrame(
+        data=goal_d1,
         index=["totalLiab", "totalStockholderEquity", "commonStock", "issuanceOfStock"],
     )
 
-    print("")
-    print("GOAL DF: \n", goal_df)
+    goal_d2 = {
+        "2022": [329870, 48205, 70349, 900, 352755],
+        "2021": [302083, 50672, 64849, 822, 351002],
+        "2020": [287912, 63090, 57365, None, 323888],
+        "2019": [258549, 65339, 50779, None, 338516],
+        "2018": [248028, 90488, 45174, 781, None],
+    }
+    goal_df2 = pd.DataFrame(
+        data=goal_d2,
+        index=[
+            "totalLiab",
+            "totalStockholderEquity",
+            "commonStock",
+            "issuanceOfStock",
+            "totalAssets",
+        ],
+    )
 
-    assert_frame_equal(new_df.astype(float), goal_df.astype(float))
+    assert_frame_equal(new_df1.astype(float), goal_df1.astype(float))
+    assert_frame_equal(new_df2.astype(float), goal_df2.astype(float))
