@@ -2,12 +2,6 @@ from typing import List
 
 import pandas as pd
 
-from jesper.scraper.yahoo_finance import (
-    get_balance_sheet,
-    get_cash_flow,
-    get_income_statement,
-)
-
 
 def _return_table(
     headers: List[str] = [

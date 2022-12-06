@@ -12,6 +12,12 @@ from jesper.scraper.yahoo_finance import (
 from jesper.utils import get_project_root
 
 
+def print_full(x):
+    pd.set_option("display.max_rows", len(x))
+    print(x)
+    pd.reset_option("display.max_rows")
+
+
 def save_stocks_finance_info(stocks: List[str]):
     """Read in the fundamental data from stocks & save it csv."""
     for idx, stock in enumerate(stocks):
@@ -24,6 +30,8 @@ def save_stocks_finance_info(stocks: List[str]):
         )
         # Append by timeseries data.
         df = pd.concat([df, adds_df])
+        print_full(df)
+
         # Save it to csv.
         save_statements_to_csv(df, stock)
 

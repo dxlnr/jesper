@@ -5,4 +5,4 @@ Jinja2
 lxml
 pandas
 requests
-selenium
+# selenium

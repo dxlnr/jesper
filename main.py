@@ -42,13 +42,18 @@ def main():
     #     print(type(col))
 
     from jesper.utils.raw import save_stocks_finance_info
-    # # Get list of ticker symbols of all s&p 500 stocks.
-    # sp500 = tickers_sp500()
-    test = ['AAPL']
-    #
-    # save_stocks_finance_info(sp500[50:])
+    from jesper.scraper.scraper import get_request_url
+    # Get list of ticker symbols of all s&p 500 stocks.
+    sp500 = tickers_sp500()
+    test = ['ALK']
+    # #
+    save_stocks_finance_info(sp500[10:])
+    # save_stocks_finance_info(test)
+    # for s in sp500:
+    #     f = f"https://finance.yahoo.com/quote/{s}/financials?p={s}"
+    #     get_request_url(f)
 
-    from jesper.scraper.yahoo_finance import get_timeseries_financial_statements
+    # from jesper.scraper.yahoo_finance import get_timeseries_financial_statements
     # df = get_timeseries_financial_statements('AAPL', 'financials')
     # print(df)
 
@@ -63,7 +68,7 @@ def main():
     # print(get_timeseries_financial_statements('CE', 'balance-sheet'))
     # print(get_timeseries_financial_statements('CE', 'cash-flow'))
 
-    save_stocks_finance_info(test)
+    # save_stocks_finance_info(test)
 
     # tsm = ['TSM', 'AMD']
     # test = ['AAPL']
