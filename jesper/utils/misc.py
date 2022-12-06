@@ -1,6 +1,7 @@
 """Miscellaneous Helper Functions"""
 from pathlib import Path
 from typing import Dict
+import itertools
 
 
 def get_project_root() -> Path:
@@ -38,12 +39,9 @@ def find(key, value):
                         yield result
 
 
-import itertools
-
-
 def peek(iterable):
     try:
         first = next(iterable)
     except StopIteration:
         return None
-    return first, itertools.chain([first], iterable)
+    return first

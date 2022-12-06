@@ -1,6 +1,4 @@
 """Basic Scraping functions."""
-import json
-import re
 from typing import Dict
 
 import backoff
@@ -29,8 +27,8 @@ def get_event_page(url: str):
 @backoff.on_exception(
     backoff.expo,
     requests.exceptions.RequestException,
-    max_tries=8,
-    jitter=backoff.random_jitter,
+    max_tries=5,
+    giveup=lambda e: e.response is not None and e.response.status_code < 500
 )
 @backoff.on_predicate(backoff.fibo, lambda x: len(x) == 0, max_value=13)
 def get_request_url(
@@ -47,7 +45,6 @@ def get_request_url(
     except:
         raise requests.exceptions.RequestException(f"Failed to load page {url}.")
 
-    html = r.text
-    print(r.status_code)
+    r.raise_for_status()
     # Return prepared string.
-    return html.split("root.App.main =")[1].split("(this)")[0].split(";\n}")[0].strip()
+    return r.text.split("root.App.main =")[1].split("(this)")[0].split(";\n}")[0].strip()

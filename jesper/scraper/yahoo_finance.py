@@ -9,7 +9,7 @@ import backoff
 import pandas as pd
 
 from jesper.scraper import get_event_page, get_request_url
-from jesper.utils.misc import findkeys, find, peek
+from jesper.utils.misc import find, peek
 
 # Keys to summary data based on sublink keys.
 FIN_KEYS = {
@@ -53,7 +53,7 @@ def _parse_page_summary_as_json(json_str: str):
         return json.loads(new_summary_data)
 
 
-# @backoff.on_predicate(backoff.fibo, lambda x: x == "{}", max_value=13)
+@backoff.on_predicate(backoff.fibo, lambda x: x is None, max_value=13)
 def _parse_page_timeseries_as_json(json_str: str):
     """Parsing the page summary from single str."""
     try:
@@ -256,14 +256,16 @@ def _parse_page_timeseries_as_json(json_str: str):
     # 'annualNetIncomeFromTaxLossCarryforward',
     # 'timestamp'
     #
-    annual_shares, _ = peek(find("annualDilutedAverageShares", timeseries_dict))
-    if annual_shares:
+
+    diluted_annual_shares = peek(find("annualDilutedAverageShares", timeseries_dict))
+    print(diluted_annual_shares)
+    if diluted_annual_shares:
         # return timeseries data after cleaning.
-        annual_shares_ser = json.dumps(annual_shares).replace("{}", "null")
-        clean_annual_shares = re.sub(
-            r"\{[\'|\"]raw[\'|\"]:(.*?),(.*?)\}", r"\1", annual_shares_ser
+        diluted_annual_shares_ser = json.dumps(diluted_annual_shares).replace("{}", "null")
+        clean_diluted_annual_shares = re.sub(
+            r"\{[\'|\"]raw[\'|\"]:(.*?),(.*?)\}", r"\1", diluted_annual_shares_ser
         )
-        return json.loads(clean_annual_shares)
+        return json.loads(clean_diluted_annual_shares)
     else:
         return None
 
@@ -382,6 +384,7 @@ def get_timeseries_financial_statements(
     url = f"https://finance.yahoo.com/quote/{ticker}/{sublink}?p={ticker}"
     # Fetch all the information.
     json_str = get_request_url(url)
+
     # Filter the summary information.
     annual_diluted_shares = _parse_page_timeseries_as_json(json_str)
     

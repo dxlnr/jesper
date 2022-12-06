@@ -46,8 +46,8 @@ def main():
     # Get list of ticker symbols of all s&p 500 stocks.
     sp500 = tickers_sp500()
     test = ['ALK']
-    # #
-    save_stocks_finance_info(sp500[10:])
+    #
+    save_stocks_finance_info(sp500[80:])
     # save_stocks_finance_info(test)
     # for s in sp500:
     #     f = f"https://finance.yahoo.com/quote/{s}/financials?p={s}"
