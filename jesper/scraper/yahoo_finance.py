@@ -107,7 +107,7 @@ def _parse_page_timeseries_as_json(json_str: str):
 
 def _convert_summary_to_pd(table: List[Dict]):
     """."""
-    df = pd.DataFrame(json_info)
+    df = pd.DataFrame(table)
     # Make sure dataframe is actually fetched correctly.
     if df.empty:
         return df
@@ -207,7 +207,9 @@ def get_financial_statements(ticker: str, sublink: str) -> pd.DataFrame:
     return _convert_summary_to_pd(summary)
 
 
-def get_timeseries_financial_statements(ticker: str, sublink: str) -> pd.DataFrame:
+def get_timeseries_financial_statements(
+    ticker: str, sublink: str, starting_year: str = "2019"
+) -> pd.DataFrame:
     assert sublink in [
         "balance-sheet",
         "financials",
@@ -421,7 +423,11 @@ def get_timeseries_financial_statements(ticker: str, sublink: str) -> pd.DataFra
     except:
         annual_diluted_shares = [None, None, None, None]
 
-    return _convert_timeseries_to_pd(annual_diluted_shares)
+    return _convert_timeseries_to_pd(
+        annual_diluted_shares,
+        name="annualDilutedAverageShares",
+        starting_year=starting_year,
+    )
 
 
 def get_balance_sheet(ticker: str, annual: bool = True):

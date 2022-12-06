@@ -5,15 +5,26 @@ from typing import List
 import numpy as np
 import pandas as pd
 
-from jesper.scraper.yahoo_finance import get_financial_info
+from jesper.scraper.yahoo_finance import (
+    get_financial_info,
+    get_timeseries_financial_statements,
+)
 from jesper.utils import get_project_root
 
 
 def save_stocks_finance_info(stocks: List[str]):
-    """."""
+    """Read in the fundamental data from stocks & save it csv."""
     for idx, stock in enumerate(stocks):
         print(f"({idx+1}) Scraping financial information for {stock}.")
+        # Retrieve main financial information.
         df = get_financial_info(stock)
+        # Retrieve from timeseries data.
+        adds_df = get_timeseries_financial_statements(
+            stock, "financials", str(list(df.columns)[-1])
+        )
+        # Append by timeseries data.
+        df = pd.concat([df, adds_df])
+        # Save it to csv.
         save_statements_to_csv(df, stock)
 
 
@@ -48,7 +59,7 @@ def _fill_df(df: pd.DataFrame, pre_df: pd.DataFrame) -> pd.DataFrame:
     for row in result_df.itertuples():
         for k in result_df.keys():
             if (row.Index in df.index) and (k in df.columns):
-                if not np.isnan(df.loc[row.Index][k]):
+                if not np.isnan(np.float_(df.loc[row.Index][k])):
                     result_df.at[row.Index, k] = df.loc[row.Index][k]
 
     # Append new column
