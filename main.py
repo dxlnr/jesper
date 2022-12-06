@@ -29,11 +29,25 @@ def main():
     # Sono Group N.V. (SEV)
     # stock = "SEV"
 
+    # import os
+    # from jesper.utils import get_project_root
+    # import pandas as pd
+    # fpath = os.path.join(get_project_root(), "data/fundamentalData", f"{stock}.csv")
+    # pre_df = pd.read_csv(fpath, index_col=0, na_values='(missing)')
+    #
+    # print(pre_df)
+    #
+    # for col in pre_df.columns:
+    #     print(col)
+    #     print(type(col))
+
     from jesper.utils.raw import save_stocks_finance_info
     # Get list of ticker symbols of all s&p 500 stocks.
     sp500 = tickers_sp500()
-    # print(get_financial_statements(stock, "balance-sheet"))
-    save_stocks_finance_info(sp500[:25])
+    test = ['AAPL']
+
+    save_stocks_finance_info(sp500[50:])
+    # save_stocks_finance_info(test)
 
     # tsm = ['TSM', 'AMD']
     # test = ['AAPL']

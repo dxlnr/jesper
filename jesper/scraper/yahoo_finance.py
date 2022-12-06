@@ -145,9 +145,13 @@ def get_financial_info(ticker: str, workers: int = 3) -> pd.DataFrame:
     """
     with multiprocessing.Pool(processes=workers) as pool:
         dfs = pool.starmap(
-            get_income_statement, zip(repeat(ticker), list(FIN_KEYS.keys()))
+            get_financial_statements, zip(repeat(ticker), list(FIN_KEYS.keys()))
         )
-    return pd.concat(dfs)
+    # Combine to one asset.
+    df = pd.concat(dfs)
+    # Remove duplicated rows.
+    df = df[~df.index.duplicated(keep='first')]
+    return df
 
 
 def get_financial_statements(ticker: str, sublink: str) -> pd.DataFrame:

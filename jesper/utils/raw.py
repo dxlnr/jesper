@@ -7,6 +7,12 @@ from jesper.scraper.yahoo_finance import get_financial_info
 from jesper.utils import get_project_root
 
 
+def print_full(x):
+    pd.set_option('display.max_rows', len(x))
+    print(x)
+    pd.reset_option('display.max_rows')
+
+
 def save_stocks_finance_info(stocks: list[str]):
     """."""
     for idx, stock in enumerate(stocks):
@@ -22,7 +28,10 @@ def save_statements_to_csv(df: pd.DataFrame, stock: str):
 
     # Check if file already exists.
     if os.path.exists(fpath):
+        # Read csv
         pre_df = pd.read_csv(fpath, index_col=0, na_values='(missing)')
+        pre_df.columns = pre_df.columns.astype(int)
+
         new_df = _fill_df(df, pre_df)
 
         new_df.to_csv(fpath)
@@ -41,6 +50,12 @@ def _fill_df(df: pd.DataFrame, pre_df: pd.DataFrame) -> pd.DataFrame:
     for row in pre_df.itertuples():
         for k in pre_df.keys():
             if (row.Index in df.index) and (k in df.columns):
+                # print("")
+                # print("row index: ", row.Index)
+                # print("k: ", k)
+                # print("pre_df at: ", pre_df.at[row.Index, k])
+                # # print("df: ", df.loc[[row.Index], [k]])
+                # print("df: ", df._get_value(row.Index, k))
                 pre_df.at[row.Index, k] = df.loc[row.Index][k]
 
     # Append new column
