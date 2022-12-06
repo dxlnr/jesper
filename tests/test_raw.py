@@ -7,7 +7,7 @@ from jesper.utils.raw import _fill_df
 
 def test_fill_df():
     """."""
-    # The previous DataFrame
+    # The previous DataFrame.
     base_d = {
         "2021": [302083, 50672, 64849, None],
         "2020": [287912, 63090, 57365, None],
@@ -48,9 +48,21 @@ def test_fill_df():
         ],
     )
 
+    d3 = {
+        "2022": [None, 48205, 70349, 900],
+        "2021": [None, 50672, 64849, 822],
+        "2020": [None, 63090, 57365, None],
+        "2019": [None, 65339, 50779, None],
+    }
+    df3 = pd.DataFrame(
+        data=d3,
+        index=["totalLiab", "totalStockholderEquity", "commonStock", "issuanceOfStock"],
+    )
+
     # Get the merged DataFrame from the tested function.
     new_df1 = _fill_df(df1, base_df)
     new_df2 = _fill_df(df2, base_df)
+    new_df3 = _fill_df(df3, base_df)
 
     # Construct the aimed for DataFrames.
     goal_d1 = {
@@ -83,5 +95,18 @@ def test_fill_df():
         ],
     )
 
+    goal_d3 = {
+        "2022": [None, 48205, 70349, 900],
+        "2021": [302083, 50672, 64849, 822],
+        "2020": [287912, 63090, 57365, None],
+        "2019": [258549, 65339, 50779, None],
+        "2018": [248028, 90488, 45174, 781],
+    }
+    goal_df3 = pd.DataFrame(
+        data=goal_d3,
+        index=["totalLiab", "totalStockholderEquity", "commonStock", "issuanceOfStock"],
+    )
+
     assert_frame_equal(new_df1.astype(float), goal_df1.astype(float))
     assert_frame_equal(new_df2.astype(float), goal_df2.astype(float))
+    assert_frame_equal(new_df3.astype(float), goal_df3.astype(float))
