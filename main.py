@@ -15,9 +15,7 @@ def main():
     # save_stocks_finance_info(sp500)
 
     # Calculate evaluation facilitating value based investing.
-    tests = ['ABMD']
-    # df = eval_value_based_stocks(tests)
-    df = eval_value_based_stocks(sp500[:80], save_results_file="iv_sp500_0_80")
+    df = eval_value_based_stocks(sp500, save_results_file="iv_sp500")
     # Apply styling for highlighting outstanding values.
     df['intrinsic value'] = df['intrinsic value'].astype(float).round(2)
     df["safety margin"] = df["safety margin"].apply(color_low_safety_margin_green)

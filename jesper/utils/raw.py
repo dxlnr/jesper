@@ -1,4 +1,5 @@
 """Read and Write"""
+import glob
 import os
 from typing import List
 
@@ -9,6 +10,22 @@ from jesper.scraper.yahoo_finance import (get_financial_info,
                                           get_timeseries_financial_statements)
 from jesper.utils import get_project_root
 from jesper.utils.vis import print_full
+
+
+def concat_result_df(dir: str, save_to_file: str = "results.csv"):
+    """Picks up all .csv files from directory &
+    concats the dataframes into one.
+
+    :param dir: Directory contains all .csv files.
+    """
+    for idx, file in enumerate(glob.glob(os.path.join(dir, "*.csv"))):
+        if idx == 0:
+            df = pd.read_csv(file, index_col=0, na_values="(missing)")
+        add_df = pd.read_csv(file, index_col=0, na_values="(missing)")
+        df = pd.concat([df, add_df])
+
+    # Save to file.
+    df.to_csv(save_to_file)
 
 
 def save_stocks_finance_info(stocks: List[str]):
