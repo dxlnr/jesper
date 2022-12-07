@@ -1,7 +1,8 @@
 """Main Entrypoint"""
 
 from jesper.eval_sheet import eval_value_based_stocks
-from jesper.scraper.stocks import tickers_sp500
+from jesper.scraper.stocks import tickers_sp500, tickers_nasdaq
+from jesper.utils.raw import save_stocks_finance_info
 from jesper.utils.style import color_low_safety_margin_green
 
 
@@ -23,61 +24,19 @@ def main():
     # NVIDIA Corporation (NVDA)
     # stock = "NVDA"
     #
-    # Jumia Technologies AG (JMIA)
-    # stock = "JMIA"
-    #
     # Sono Group N.V. (SEV)
     # stock = "SEV"
 
-    # import os
-    # from jesper.utils import get_project_root
-    # import pandas as pd
-    # fpath = os.path.join(get_project_root(), "data/fundamentalData", f"{stock}.csv")
-    # pre_df = pd.read_csv(fpath, index_col=0, na_values='(missing)')
-    #
-    # print(pre_df)
-    #
-    # for col in pre_df.columns:
-    #     print(col)
-    #     print(type(col))
-
-    from jesper.utils.raw import save_stocks_finance_info
-    from jesper.scraper.scraper import get_request_url
+    # # Get list of ticker symbols of all NASDAQ stocks.
+    # nasdaq = tickers_nasdaq()
     # Get list of ticker symbols of all s&p 500 stocks.
     sp500 = tickers_sp500()
-    test = ['ALK']
-    #
-    save_stocks_finance_info(sp500[80:])
-    # save_stocks_finance_info(test)
-    # for s in sp500:
-    #     f = f"https://finance.yahoo.com/quote/{s}/financials?p={s}"
-    #     get_request_url(f)
+    # Collecting and saving financial information about various stocks.
+    # save_stocks_finance_info(['UDR'])
+    save_stocks_finance_info(sp500)
 
-    # from jesper.scraper.yahoo_finance import get_timeseries_financial_statements
-    # df = get_timeseries_financial_statements('AAPL', 'financials')
-    # print(df)
-
-    # for stock in tickers_sp500():
-    #     print(f"{stock}:")
-    #     df = get_timeseries_financial_statements(stock, 'financials')
-    #     print(len(df))
-    #     print(df)
-
-    # print(get_timeseries_financial_statements('AAPL', 'financials'))
-    # print(get_timeseries_financial_statements('CE', 'financials'))
-    # print(get_timeseries_financial_statements('CE', 'balance-sheet'))
-    # print(get_timeseries_financial_statements('CE', 'cash-flow'))
-
-    # save_stocks_finance_info(test)
-
-    # tsm = ['TSM', 'AMD']
-    # test = ['AAPL']
-
-    # import random
-    # tests = random.sample(sp500, 20)
     # # Calculate evaluation facilitating value based investing.
-    # # df = eval_value_based_stocks(sp500[:75])
-    # df = eval_value_based_stocks(tsm)
+    # df = eval_value_based_stocks(sp500[:75])
     # # Apply styling for highlighting outstanding values.
     # df['intrinsic value'] = df['intrinsic value'].astype(float).round(2)
     # df["safety margin"] = df["safety margin"].apply(color_low_safety_margin_green)

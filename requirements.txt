@@ -4,5 +4,6 @@ colorama
 Jinja2
 lxml
 pandas
+pyftpdlib
 requests
 # selenium

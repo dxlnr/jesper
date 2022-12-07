@@ -10,6 +10,7 @@ from jesper.scraper.yahoo_finance import (
     get_timeseries_financial_statements,
 )
 from jesper.utils import get_project_root
+from jesper.utils.vis import print_full
 
 
 def save_stocks_finance_info(stocks: List[str]):
@@ -38,7 +39,7 @@ def save_statements_to_csv(df: pd.DataFrame, stock: str):
     if os.path.exists(fpath):
         # Read csv
         pre_df = pd.read_csv(fpath, index_col=0, na_values="(missing)")
-        pre_df.columns = pre_df.columns.astype(int)
+        pre_df.columns = pre_df.columns.astype(float).astype(int)
 
         new_df = _fill_df(df, pre_df)
 

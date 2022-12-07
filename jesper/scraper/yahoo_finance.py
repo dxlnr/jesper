@@ -258,10 +258,11 @@ def _parse_page_timeseries_as_json(json_str: str):
     #
 
     diluted_annual_shares = peek(find("annualDilutedAverageShares", timeseries_dict))
-    print(diluted_annual_shares)
     if diluted_annual_shares:
         # return timeseries data after cleaning.
-        diluted_annual_shares_ser = json.dumps(diluted_annual_shares).replace("{}", "null")
+        diluted_annual_shares_ser = json.dumps(diluted_annual_shares).replace(
+            "{}", "null"
+        )
         clean_diluted_annual_shares = re.sub(
             r"\{[\'|\"]raw[\'|\"]:(.*?),(.*?)\}", r"\1", diluted_annual_shares_ser
         )
@@ -344,6 +345,21 @@ def get_financial_info(ticker: str, workers: int = 3) -> pd.DataFrame:
     df = pd.concat(dfs)
     # Remove duplicated rows.
     df = df[~df.index.duplicated(keep="first")]
+    # Make sure the columns header is correct.
+    c_heads_list = [
+        int(x)
+        for x in sorted(
+            list(
+                pd.date_range(
+                    start=str(df.columns[-1]), periods=4, freq="Y", inclusive="left"
+                ).strftime("%Y")
+            ),
+            reverse=True,
+        )
+    ]
+    if c_heads_list != list(df.columns):
+        df.columns = c_heads_list
+
     return df
 
 
@@ -387,7 +403,7 @@ def get_timeseries_financial_statements(
 
     # Filter the summary information.
     annual_diluted_shares = _parse_page_timeseries_as_json(json_str)
-    
+
     if annual_diluted_shares is None:
         annual_diluted_shares = [None, None, None, None]
 
