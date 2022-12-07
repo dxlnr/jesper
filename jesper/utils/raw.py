@@ -5,10 +5,8 @@ from typing import List
 import numpy as np
 import pandas as pd
 
-from jesper.scraper.yahoo_finance import (
-    get_financial_info,
-    get_timeseries_financial_statements,
-)
+from jesper.scraper.yahoo_finance import (get_financial_info,
+                                          get_timeseries_financial_statements)
 from jesper.utils import get_project_root
 from jesper.utils.vis import print_full
 
@@ -69,4 +67,7 @@ def _fill_df(df: pd.DataFrame, pre_df: pd.DataFrame) -> pd.DataFrame:
         result_df[c] = df[c]
 
     # Sort the columns & return.
-    return result_df.reindex(sorted(result_df.columns, reverse=True), axis=1)
+    result_df = result_df.reindex(sorted(result_df.columns, reverse=True), axis=1)
+    # Remove duplicated rows.
+    result_df = result_df[~result_df.index.duplicated(keep="first")]
+    return result_df

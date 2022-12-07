@@ -1,6 +1,13 @@
+"""Calculate various Evaluations of Stocks."""
+import os
 from typing import List
 
 import pandas as pd
+
+from jesper.scraper.yahoo_finance import (get_financial_info,
+                                          get_timeseries_financial_statements)
+from jesper.utils import get_project_root
+from jesper.utils.raw import save_statements_to_csv
 
 
 def _return_table(
@@ -27,6 +34,35 @@ def _return_table(
     return pd.DataFrame(columns=headers)
 
 
+def get_financials(stock: str, scrape: bool = False) -> pd.DataFrame:
+    """Get all the fundamental financial information about a stock.
+
+    :param stock: Acronym of specific stock. E.g. "AAPL" for the Apple Inc.
+    :param scrape: Boolean to define whether the data should be scraped from 
+        webpage or read from .csv file.
+    """
+    # Construct file path.
+    fpath = os.path.join(get_project_root(), "data/fundamentalData", f"{stock}.csv")
+    if os.path.exists(fpath):
+        print(f"Reading financial information for {stock} from {fpath}.")
+        # Read the information.
+        df = pd.read_csv(fpath, index_col=0, na_values="(missing)")
+        df.columns = df.columns.astype(float).astype(int)
+    else:
+        print(f"Scraping financial information for {stock}.")
+        df = get_financial_info(stock)
+        # Retrieve from timeseries data.
+        adds_df = get_timeseries_financial_statements(
+            stock, "financials", str(list(df.columns)[-1])
+        )
+        # Append by timeseries data.
+        df = pd.concat([df, adds_df])
+        # Save it to csv.
+        save_statements_to_csv(df, stock)
+
+    return df
+
+
 def compound(x: float, y: float) -> float:
     """Performs a compounding calculation."""
     z = (1 + x) ** y
@@ -42,16 +78,14 @@ def discount(x: float, y: float) -> float:
 def annual_report_readings(stock: str):
     """Returns an investing stock screener dataframe."""
     # Run scraping and return data frame.
-    bs_df = get_balance_sheet(stock)
-    in_df = get_income_statement(stock)
-    cf_df = get_cash_flow(stock)
+    df = get_financials(stock)
 
     # Define values from various sheets.
     values = {
-        "totalRevenue": in_df,
-        "ebit": in_df,
-        "totalStockholderEquity": bs_df,
-        "longTermDebt": bs_df,
+        "totalRevenue": df,
+        "ebit": df,
+        "totalStockholderEquity": df,
+        "longTermDebt": df,
     }
 
     r_l = list()
@@ -77,7 +111,11 @@ def annual_report_readings(stock: str):
 
 
 def intrinsic_value(
-    stock: str, compound_rate: float = 0.1, discount_rate: float = 0.05, terms: int = 5
+    stock: str,
+    compound_rate: float = 0.1,
+    discount_rate: float = 0.05,
+    terms: int = 5,
+    scrape: bool = False,
 ) -> pd.DataFrame:
     """Computes the intrinsic value of a stock.
 
@@ -93,37 +131,43 @@ def intrinsic_value(
     :param compound_rate:
     :param discount_rate:
     :param terms:
+    :param scrape: Boolean to define whether the data should be scraped from 
+        webpage or read from .csv file.
     :returns: pd.DataFrame holding all the relevant information regarding the
         intrinsic value of a specific stock.
     """
-    # Run scraping and return data frame.
-    balance_sheet_df = get_balance_sheet(stock)
-    income_df = get_income_statement(stock)
-    cashflow_df = get_cash_flow(stock)
+    # Read from .csv or scrape and return data frame.
+    fin_df = get_financials(stock, scrape)
 
     # Construct results table.
     df = _return_table()
 
+    # print(fin_df.loc["incomeBeforeTax"].iat[0])
+    # print(fin_df.loc["depreciation"].iat[0])
+    # print(fin_df.loc["capitalExpenditures"].iat[0])
+    # print(fin_df.loc["annualDilutedAverageShares"].iat[0])
+    # print(fin_df.loc["annualDilutedAverageShares"].iat[1])
+
     try:
-        df.at[0, "incomeBeforeTax"] = income_df.loc["incomeBeforeTax"].iat[0]
+        df.at[0, "incomeBeforeTax"] = fin_df.loc["incomeBeforeTax"].iat[0]
     except:
         df.at[0, "incomeBeforeTax"] = None
     try:
-        df.at[0, "depreciation"] = cashflow_df.loc["depreciation"].iat[0]
+        df.at[0, "depreciation"] = fin_df.loc["depreciation"].iat[0]
     except:
         df.at[0, "depreciation"] = None
     try:
-        df.at[0, "capitalExpenditures"] = cashflow_df.loc["capitalExpenditures"].iat[0]
+        df.at[0, "capitalExpenditures"] = fin_df.loc["capitalExpenditures"].iat[0]
     except:
         df.at[0, "capitalExpenditures"] = None
 
     # Calculating Average Capital Expenditure.
     try:
-        df.at[0, "Average Capex"] = cashflow_df.loc["capitalExpenditures"].mean()
+        df.at[0, "Average Capex"] = fin_df.loc["capitalExpenditures"].mean()
     except:
         df.at[0, "Average Capex"] = None
 
-    # Calculating Owners Earnings
+    # Calculating Owners Earnings: Free Cash Flow (FCF)
     earnings = df["incomeBeforeTax"] + df["depreciation"] - df["Average Capex"]
     df.at[0, "Owners Earnings"] = earnings.iloc[0]
 
@@ -143,9 +187,12 @@ def intrinsic_value(
 
     # Find Outstanding Shares
     try:
-        df.at[0, "Outstanding Shares"] = income_df.loc[
-            "annualDilutedAverageShares"
-        ].iat[0]
+        df.at[0, "Outstanding Shares"] = fin_df.loc["annualDilutedAverageShares"].iat[0]
+    except:
+        df.at[0, "Outstanding Shares"] = None
+
+    try:
+        df.at[0, "Outstanding Shares"] = fin_df.loc["annualDilutedAverageShares"].iat[1]
     except:
         df.at[0, "Outstanding Shares"] = None
 

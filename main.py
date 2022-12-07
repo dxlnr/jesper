@@ -7,41 +7,22 @@ from jesper.utils.style import color_low_safety_margin_green
 
 
 def main():
-    # Choose single stock.
-    #
-    # Apple Inc. (AAPL)
-    stock = "AAPL"
-    #
-    # Alphabet Inc. (GOOG)
-    # stock = "GOOG"
-    #
-    # Meta Platforms, Inc. (META)
-    # stock = "META"
-    #
-    # Tesla, Inc. (TSLA)
-    # stock = "TSLA"
-    #
-    # NVIDIA Corporation (NVDA)
-    # stock = "NVDA"
-    #
-    # Sono Group N.V. (SEV)
-    # stock = "SEV"
-
-    # # Get list of ticker symbols of all NASDAQ stocks.
+    # Get list of ticker symbols of all NASDAQ stocks.
     # nasdaq = tickers_nasdaq()
     # Get list of ticker symbols of all s&p 500 stocks.
     sp500 = tickers_sp500()
-    # Collecting and saving financial information about various stocks.
-    # save_stocks_finance_info(['UDR'])
-    save_stocks_finance_info(sp500)
+    # # Collecting and saving financial information about various stocks.
+    # save_stocks_finance_info(sp500)
 
-    # # Calculate evaluation facilitating value based investing.
-    # df = eval_value_based_stocks(sp500[:75])
-    # # Apply styling for highlighting outstanding values.
-    # df['intrinsic value'] = df['intrinsic value'].astype(float).round(2)
-    # df["safety margin"] = df["safety margin"].apply(color_low_safety_margin_green)
-    # # Print final results.
-    # print("\n", df, "\n")
+    # Calculate evaluation facilitating value based investing.
+    tests = ['ABMD']
+    # df = eval_value_based_stocks(tests)
+    df = eval_value_based_stocks(sp500[:80], save_results_file="iv_sp500_0_80")
+    # Apply styling for highlighting outstanding values.
+    df['intrinsic value'] = df['intrinsic value'].astype(float).round(2)
+    df["safety margin"] = df["safety margin"].apply(color_low_safety_margin_green)
+    # Print final results.
+    print("\n", df, "\n")
 
 
 if __name__ == "__main__":

@@ -1,8 +1,10 @@
+import os
 from typing import List
 
 import pandas as pd
 
 from jesper.scraper.yahoo_finance import scraper_to_latest_stock_price
+from jesper.utils import get_project_root
 from jesper.valuation import intrinsic_value
 
 
@@ -27,6 +29,7 @@ def eval_value_based_stocks(
     compound_rate: float = 0.1,
     discount_rate: float = 0.05,
     terms: int = 5,
+    save_results_file: str = "",
 ):
     """Reads in a list of stock ticker symbols and spits out the evaluation
     useful for value based investing.
@@ -66,4 +69,10 @@ def eval_value_based_stocks(
             )
 
     df.set_index("stock", inplace=True)
+
+    if save_results_file:
+        # Construct file path.
+        fpath = os.path.join(get_project_root(), "results", f"{save_results_file}.csv")
+        df.to_csv(fpath)
+        print(f"Saved results to {fpath}.")
     return df

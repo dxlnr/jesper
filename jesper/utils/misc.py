@@ -1,7 +1,7 @@
 """Miscellaneous Helper Functions"""
+import itertools
 from pathlib import Path
 from typing import Dict
-import itertools
 
 
 def get_project_root() -> Path:
