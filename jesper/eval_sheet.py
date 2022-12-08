@@ -63,7 +63,7 @@ def eval_value_based_stocks(
         df.at[idx, "stock"] = stock
         df.at[idx, "latest stock price"] = latest_stock_price
         if len(iv_df.index) != 0:
-            df.at[idx, "intrinsic value"] = iv_df["Per Share"].iloc[0]
+            df.at[idx, "intrinsic value"] = float(iv_df["Per Share"].iloc[0])
             df.at[idx, "safety margin"] = float(latest_stock_price) / float(
                 iv_df["Per Share"].iloc[0]
             )

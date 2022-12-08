@@ -6,10 +6,20 @@ from typing import List
 import numpy as np
 import pandas as pd
 
-from jesper.scraper.yahoo_finance import (get_financial_info,
-                                          get_timeseries_financial_statements)
+from jesper.scraper.yahoo_finance import (
+    get_financial_info,
+    get_timeseries_financial_statements,
+)
 from jesper.utils import get_project_root
 from jesper.utils.vis import print_full
+
+
+def save_stock_finance_info_to_csv(ticker: str, path: "data/roic"):
+    """Read in the DataFrame for stock & save it .csv."""
+    # Construct file name
+    file_name = os.path.join(get_project_root(), path, f"{ticker}.csv")
+    # Save to file.
+    df.to_csv(file_name)
 
 
 def concat_result_df(dir: str, save_to_file: str = "results.csv"):

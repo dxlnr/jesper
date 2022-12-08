@@ -4,8 +4,10 @@ from typing import List
 
 import pandas as pd
 
-from jesper.scraper.yahoo_finance import (get_financial_info,
-                                          get_timeseries_financial_statements)
+from jesper.scraper.yahoo_finance import (
+    get_financial_info,
+    get_timeseries_financial_statements,
+)
 from jesper.utils import get_project_root
 from jesper.utils.raw import save_statements_to_csv
 

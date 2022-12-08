@@ -1,4 +1,5 @@
 """Basic Scraping functions."""
+import json
 from typing import Dict
 
 import backoff
@@ -7,7 +8,7 @@ from bs4 import BeautifulSoup
 
 
 def get_event_page(url: str):
-    """Download a webpage and return a beautiful soup doc."""
+    """Downloads a webpage and returns a BeautifulSoup doc."""
     # Web API headers.
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36\
@@ -22,6 +23,19 @@ def get_event_page(url: str):
     page_content = BeautifulSoup(page_response.content, features="html.parser")
 
     return page_content
+
+
+def get_page_content(url: str):
+    """Scrapes a webpage and returns a BeautifulSoup doc."""
+    # Pull data from link.
+    try:
+        page_response = requests.get(url, timeout=1000)
+    except:
+        raise Exception(f"Failed to load page {url}.")
+    # Structure raw data for parsing.
+    page_content = BeautifulSoup(page_response.content, features="html.parser")
+    # Return structured data.
+    return json.loads(page_content.select_one("#__NEXT_DATA__").text)
 
 
 @backoff.on_exception(

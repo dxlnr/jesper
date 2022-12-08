@@ -6,4 +6,5 @@ lxml
 pandas
 pyftpdlib
 requests
+tabulate
 # selenium
