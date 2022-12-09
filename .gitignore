@@ -156,7 +156,7 @@ cython_debug/
 data/numerai/*
 data/fundamentalData/*
 data/roic/*
-!data/roic/sp500/AAPL.csv
+!data/AAPL.csv
 
 # Assets
 assets/advances-in-financial-machine-learning.pdf
