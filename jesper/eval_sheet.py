@@ -5,7 +5,7 @@ import pandas as pd
 
 from jesper.scraper.yahoo_finance import scraper_to_latest_stock_price
 from jesper.utils import get_project_root
-from jesper.valuation import intrinsic_value
+from jesper.valuation import intrinsic_value, iv_roic
 
 
 def create_eval_table(
@@ -29,6 +29,7 @@ def eval_value_based_stocks(
     compound_rate: float = 0.1,
     discount_rate: float = 0.05,
     terms: int = 5,
+    path_to_csv: str = "",
     save_results_file: str = "",
 ):
     """Reads in a list of stock ticker symbols and spits out the evaluation
@@ -54,7 +55,8 @@ def eval_value_based_stocks(
     for idx, stock in enumerate(stocks):
         print(f"({idx+1}) Calculating intrinsic_value for {stock}.")
         # Compute the intrinsic value table.
-        iv_df = intrinsic_value(stock, compound_rate, discount_rate, terms)
+        # iv_df = intrinsic_value(stock, compound_rate, discount_rate, terms)
+        iv_df = iv_roic(stock, compound_rate, discount_rate, terms, path_to_csv)
         # Scrape the latest stock price from yahoo finance.
         url = f"https://finance.yahoo.com/quote/{stock}?p={stock}"
         latest_stock_price = scraper_to_latest_stock_price(url)

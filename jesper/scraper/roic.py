@@ -7,15 +7,6 @@ from bs4 import BeautifulSoup
 from jesper.scraper import get_page_content
 
 
-def save_financial_info_roic(
-    stocks: List[str], max_threads: int = 10
-) -> None:
-    """."""
-    threads = min(max_threads, len(stocks))
-    with concurrent.futures.ThreadPoolExecutor(max_workers=threads) as executor:
-        executor.map(scrape_roic, stocks)
-
-
 def scrape_roic(ticker: str) -> pd.DataFrame:
     """Scrapes roic.ai for fundamental financial information of a stock."""
     # Construct the url.
