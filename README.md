@@ -4,7 +4,18 @@
 
 ### Calculate the Intrinsic Value of a Stock
 
-Intrinsic value is an all-important concept that offers the only logical approach to evaluating the relative attractiveness of investments and businesses. Intrinsic value can be defined simply: It is the discounted value of the cash that can be taken out of a business during its remaining life.
+The intrinsic value of any stock, bond or business is determined by the cash inflows
+and outflows, discounted at an appropriate interest rate, that can be expected to
+occur during the remaining life of an asset.
+
+The intrinsic value is the present value of all future cash flows added together.
+
+You need to know:
+1. How much cash will the business make for you in the future?
+2. What are the future cash flows worth to you right now?
+
+<!--
+Intrinsic value is an all-important concept that offers the only logical approach to evaluating the relative attractiveness of investments and businesses. Intrinsic value can be defined simply: It is the discounted value of the cash that can be taken out of a business during its remaining life. -->
 
 For more [information](https://finmasters.com/intrinsic-value/).
 

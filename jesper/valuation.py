@@ -4,23 +4,21 @@ from typing import List
 
 import pandas as pd
 
-from jesper.scraper.yahoo_finance import (get_financial_info,
-                                          get_timeseries_financial_statements)
+from jesper.scraper.yahoo_finance import (
+    get_financial_info,
+    get_timeseries_financial_statements,
+)
 from jesper.utils import get_project_root
 from jesper.utils.raw import save_statements_to_csv
 
 
 def _return_table(
     headers: List[str] = [
-        "incomeBeforeTax",
+        "operatingIncome",
         "depreciation",
-        "capitalExpenditures",
-        "Average Capex",
+        "capex",
         "Owners Earnings",
-        "PV_multiplier",
-        "DCF_multiplier",
-        "OE*PV",
-        "OE*DCF",
+        "Average Growth Rate",
         "Intrinsic Value",
         "Outstanding Shares",
         "Per Share",
@@ -75,6 +73,12 @@ def discount(x: float, y: float) -> float:
     return z
 
 
+def calc_avg_growth_rate(y: List[int]) -> float:
+    """Computes average growth rate."""
+    gr = [(y[idx - 1] / y[idx]) - 1 for idx in range(1, len(y))]
+    return sum(gr) / len(gr)
+
+
 def annual_report_readings(stock: str):
     """Returns an investing stock screener dataframe."""
     # Run scraping and return data frame.
@@ -113,8 +117,10 @@ def annual_report_readings(stock: str):
 def iv_roic(
     stock: str,
     compound_rate: float = 0.1,
-    discount_rate: float = 0.05,
+    discount_rate: float = 0.15,
+    terminal_value: int = 10,
     terms: int = 5,
+    free_cash_flow: bool = False,
     path_to_csv: str = "data/roic",
 ) -> pd.DataFrame:
     """Computes the intrinsic value of a stock.
@@ -142,60 +148,55 @@ def iv_roic(
     # Construct results table.
     df = _return_table()
 
-    from jesper.utils.raw import print_full
-    print_full(fin_df)
-
-    print(fin_df.loc["incomeBeforeTax"].iat[0])
-    print(fin_df.loc["depreciation"].iat[0])
-    print(fin_df.loc["capitalExpenditures"].iat[0])
-    print(fin_df.loc["annualDilutedAverageShares"].iat[0])
-    print(fin_df.loc["annualDilutedAverageShares"].iat[1])
-
     try:
-        df.at[0, "incomeBeforeTax"] = fin_df.loc["incomeBeforeTax"].iat[0]
+        df.at[0, "operatingIncome"] = int(fin_df.loc["operatingIncome"].iat[0])
     except:
-        df.at[0, "incomeBeforeTax"] = None
+        df.at[0, "operatingIncome"] = None
     try:
-        df.at[0, "depreciation"] = fin_df.loc["depreciation"].iat[0]
+        df.at[0, "depreciation"] = int(fin_df.loc["depreciationAndAmortization"].iat[0])
     except:
         df.at[0, "depreciation"] = None
     try:
-        df.at[0, "capitalExpenditures"] = fin_df.loc["capitalExpenditures"].iat[0]
+        df.at[0, "capex"] = int(fin_df.loc["capitalExpenditure"].iat[0])
     except:
-        df.at[0, "capitalExpenditures"] = None
+        df.at[0, "capex"] = None
 
-    # Calculating Average Capital Expenditure.
-    try:
-        df.at[0, "Average Capex"] = fin_df.loc["capitalExpenditures"].mean()
-    except:
-        df.at[0, "Average Capex"] = None
+    # Calculate the average growth rate.
+    df.at[0, "Average Growth Rate"] = calc_avg_growth_rate(
+        list(fin_df.loc["freeCashFlow"].iloc[:terms].astype(float))
+    )
+    # Calculating Owners Earnings / Free Cash Flow (FCF)
+    if free_cash_flow:
+        try:
+            df.at[0, "Owners Earnings"] = int(fin_df.loc["freeCashFlow"].iat[0])
+        except:
+            df.at[0, "Owners Earnings"] = None
+    else:
+        earnings = df["operatingIncome"] + df["depreciation"] - df["capex"]
+        df.at[0, "Owners Earnings"] = int(earnings.iloc[0])
 
-    # Calculating Owners Earnings: Free Cash Flow (FCF)
-    earnings = df["incomeBeforeTax"] + df["depreciation"] - df["Average Capex"]
-    df.at[0, "Owners Earnings"] = earnings.iloc[0]
-
-    # Find the DCF Multiplier
-    dfc = [compound(compound_rate, y) for y in range(1, terms + 1)]
+    # Find the DCF (Discounted Cash Flow) Multiplier
+    dfc = [compound(df.at[0, "Average Growth Rate"], y) for y in range(1, terms + 1)]
     dfd = [discount(discount_rate, y) for y in range(1, terms + 1)]
     amounts = list(map(lambda x, y: x * y, dfc, dfd))
-    # Find the DCF Multiplier
-    df["DCF_multiplier"] = sum(amounts)
-    # Find the PV (Present Value) Multiplier
-    df["PV_multiplier"] = amounts[-1] / discount_rate
 
-    # Calculate the intrinsic value
-    df["OE*PV"] = df["Owners Earnings"] * df["PV_multiplier"]
-    df["OE*DCF"] = df["Owners Earnings"] * df["DCF_multiplier"]
-    df["Intrinsic Value"] = df["OE*PV"] + df["OE*DCF"]
+    df["Intrinsic Value"] = int(
+        df["Owners Earnings"] * sum(amounts)
+        + df["Owners Earnings"] * amounts[-1] * terminal_value
+    )
 
     # Find Outstanding Shares
     try:
-        df.at[0, "Outstanding Shares"] = fin_df.loc["annualDilutedAverageShares"].iat[0]
+        df.at[0, "Outstanding Shares"] = int(
+            fin_df.loc["weightedAverageShsOutDil"].iat[0]
+        )
     except:
         df.at[0, "Outstanding Shares"] = None
 
     try:
-        df.at[0, "Outstanding Shares"] = fin_df.loc["annualDilutedAverageShares"].iat[1]
+        df.at[0, "Outstanding Shares"] = int(
+            fin_df.loc["weightedAverageShsOutDil"].iat[1]
+        )
     except:
         df.at[0, "Outstanding Shares"] = None
 
@@ -236,12 +237,6 @@ def intrinsic_value(
 
     # Construct results table.
     df = _return_table()
-
-    # print(fin_df.loc["incomeBeforeTax"].iat[0])
-    # print(fin_df.loc["depreciation"].iat[0])
-    # print(fin_df.loc["capitalExpenditures"].iat[0])
-    # print(fin_df.loc["annualDilutedAverageShares"].iat[0])
-    # print(fin_df.loc["annualDilutedAverageShares"].iat[1])
 
     try:
         df.at[0, "incomeBeforeTax"] = fin_df.loc["incomeBeforeTax"].iat[0]

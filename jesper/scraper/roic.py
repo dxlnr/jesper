@@ -38,10 +38,14 @@ def scrape_roic(ticker: str) -> pd.DataFrame:
     # 'isy': Income Statement yearly
     # 'cfy': Cashflow Statement yearly
     is_df = _convert_data_to_df(data["props"]["pageProps"]["data"]["data"]["isy"])
+    is_df = is_df.loc[:, ~is_df.columns.duplicated()]
     bs_df = _convert_data_to_df(data["props"]["pageProps"]["data"]["data"]["bsy"])
+    bs_df = bs_df.loc[:, ~bs_df.columns.duplicated()]
     cf_df = _convert_data_to_df(data["props"]["pageProps"]["data"]["data"]["cfy"])
+    cf_df = cf_df.loc[:, ~cf_df.columns.duplicated()]
+
     # Concat to one DataFrame
-    df = pd.concat([is_df, bs_df, cf_df])
+    df = pd.concat([is_df, bs_df, cf_df], ignore_index=True)
     # Remove duplicates
     df = df[~df.index.duplicated(keep="first")]
     return df
@@ -64,8 +68,6 @@ def _convert_data_to_df(data: List[Dict]) -> pd.DataFrame:
         del df["calendarYear"]
     if "period" in df:
         del df["period"]
-    if "cik" in df:
-        del df["cik"]
 
     # Use date as index & convert it to pandas datetime.
     df.set_index("date", inplace=True)

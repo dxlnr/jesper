@@ -13,7 +13,7 @@ def pd_color_low_safety_margin_green(val):
 
 def color_low_safety_margin_green(val):
     """Colorize specific value between 0 & 0.3."""
-    color = colorama.Fore.GREEN if 0 < val <= 0.3 else colorama.Fore.WHITE
+    color = colorama.Fore.GREEN if 0 < val <= 0.55 else colorama.Fore.WHITE
     return color + str("{:>.2%}".format(val)) + colorama.Style.RESET_ALL
 
 

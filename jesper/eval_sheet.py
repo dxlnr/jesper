@@ -1,6 +1,7 @@
 import os
 from typing import List
 
+import numpy as np
 import pandas as pd
 
 from jesper.scraper.yahoo_finance import scraper_to_latest_stock_price
@@ -27,8 +28,9 @@ def create_eval_table(
 def eval_value_based_stocks(
     stocks: List[str],
     compound_rate: float = 0.1,
-    discount_rate: float = 0.05,
-    terms: int = 5,
+    discount_rate: float = 0.15,
+    terminal_value: int = 10,
+    terms: int = 10,
     path_to_csv: str = "",
     save_results_file: str = "",
 ):
@@ -56,7 +58,14 @@ def eval_value_based_stocks(
         print(f"({idx+1}) Calculating intrinsic_value for {stock}.")
         # Compute the intrinsic value table.
         # iv_df = intrinsic_value(stock, compound_rate, discount_rate, terms)
-        iv_df = iv_roic(stock, compound_rate, discount_rate, terms, path_to_csv)
+        iv_df = iv_roic(
+            stock,
+            compound_rate,
+            discount_rate,
+            terminal_value,
+            terms,
+            path_to_csv=path_to_csv,
+        )
         # Scrape the latest stock price from yahoo finance.
         url = f"https://finance.yahoo.com/quote/{stock}?p={stock}"
         latest_stock_price = scraper_to_latest_stock_price(url)
@@ -66,10 +75,14 @@ def eval_value_based_stocks(
         df.at[idx, "latest stock price"] = latest_stock_price
         if len(iv_df.index) != 0:
             df.at[idx, "intrinsic value"] = float(iv_df["Per Share"].iloc[0])
-            df.at[idx, "safety margin"] = float(latest_stock_price) / float(
-                iv_df["Per Share"].iloc[0]
-            )
+            if iv_df["Per Share"].iloc[0] == 0.0:
+                df.at[idx, "safety margin"] = np.nan
+            else:
+                df.at[idx, "safety margin"] = float(latest_stock_price) / float(
+                    iv_df["Per Share"].iloc[0]
+                )
 
+    df["intrinsic value"] = df["intrinsic value"].astype(float).round(2)
     df.set_index("stock", inplace=True)
 
     if save_results_file:
