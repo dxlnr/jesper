@@ -4,6 +4,7 @@ from typing import List
 
 import pandas as pd
 
+from jesper.scraper.roic import scrape_roic
 from jesper.scraper.yahoo_finance import (
     get_financial_info,
     get_timeseries_financial_statements,
@@ -48,15 +49,11 @@ def get_financials(stock: str, path_to_csv: str = "") -> pd.DataFrame:
         df.columns = df.columns.astype(float).astype(int)
     else:
         print(f"Scraping financial information for {stock}.")
-        df = get_financial_info(stock)
-        # Retrieve from timeseries data.
-        adds_df = get_timeseries_financial_statements(
-            stock, "financials", str(list(df.columns)[-1])
-        )
-        # Append by timeseries data.
-        df = pd.concat([df, adds_df])
-        # Save it to csv.
-        save_statements_to_csv(df, stock)
+        # Scrape the information.
+        df = scrape_roic(ticker=stock)
+        # Save to file.
+        df.to_csv(fpath)
+        print(f"Saved financials for {stock} to {fpath}.")
 
     return df
 
@@ -143,7 +140,7 @@ def iv_roic(
         intrinsic value of a specific stock.
     """
     # Read from .csv or scrape and return data frame.
-    fin_df = get_financials(stock, path_to_csv)
+    fin_df = get_financials(stock, path_to_csv=path_to_csv)
 
     # Construct results table.
     df = _return_table()
@@ -173,14 +170,14 @@ def iv_roic(
             df.at[0, "Owners Earnings"] = None
     else:
         earnings = df["operatingIncome"] + df["depreciation"] - df["capex"]
-        df.at[0, "Owners Earnings"] = int(earnings.iloc[0])
+        df.at[0, "Owners Earnings"] = earnings.iloc[0]
 
     # Find the DCF (Discounted Cash Flow) Multiplier
     dfc = [compound(df.at[0, "Average Growth Rate"], y) for y in range(1, terms + 1)]
     dfd = [discount(discount_rate, y) for y in range(1, terms + 1)]
     amounts = list(map(lambda x, y: x * y, dfc, dfd))
 
-    df["Intrinsic Value"] = int(
+    df["Intrinsic Value"] = float(
         df["Owners Earnings"] * sum(amounts)
         + df["Owners Earnings"] * amounts[-1] * terminal_value
     )

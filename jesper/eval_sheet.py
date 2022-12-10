@@ -57,7 +57,6 @@ def eval_value_based_stocks(
     for idx, stock in enumerate(stocks):
         print(f"({idx+1}) Calculating intrinsic_value for {stock}.")
         # Compute the intrinsic value table.
-        # iv_df = intrinsic_value(stock, compound_rate, discount_rate, terms)
         iv_df = iv_roic(
             stock,
             compound_rate,

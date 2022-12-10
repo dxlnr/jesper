@@ -6,6 +6,8 @@ import backoff
 import requests
 from bs4 import BeautifulSoup
 
+from jesper.scraper.user_agents import USER_AGENTS
+
 
 def get_event_page(url: str):
     """Downloads a webpage and returns a BeautifulSoup doc."""
@@ -27,9 +29,13 @@ def get_event_page(url: str):
 
 def get_page_content(url: str):
     """Scrapes a webpage and returns a BeautifulSoup doc."""
+    # Pick up a random user agent header.
+    user_agent = random.choice(USER_AGENTS)
+    # 
+    headers = {'User-Agent': user_agent}
     # Pull data from link.
     try:
-        page_response = requests.get(url, timeout=1000)
+        page_response = requests.get(url, headers=headers, timeout=1000)
     except:
         raise Exception(f"Failed to load page {url}.")
     # Structure raw data for parsing.

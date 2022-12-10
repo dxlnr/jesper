@@ -21,11 +21,11 @@ def main():
     # save_financial_info_roic(nasdaq, path="data/roic/nasdaq")
 
     # Calculate evaluation facilitating value based investing.
-    single = ["AAPL"]
-    # df = eval_value_based_stocks(single, path_to_csv="data/roic/sp500")
-    df = eval_value_based_stocks(
-        sp500, path_to_csv="data/roic/sp500", save_results_file="iv_sp500"
-    )
+    single = ["TSM", "TCEHY"]
+    df = eval_value_based_stocks(single, path_to_csv="data/roic/sp500")
+    # df = eval_value_based_stocks(
+    #     sp500[:100], path_to_csv="data/roic/sp500", save_results_file="iv_sp500"
+    # )
     # Apply styling for highlighting outstanding values.
     # df["intrinsic value"] = df["intrinsic value"].astype(float).round(2)
     df["safety margin"] = df["safety margin"].apply(color_low_safety_margin_green)
