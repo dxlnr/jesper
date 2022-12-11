@@ -2,9 +2,8 @@
 from typing import Dict, List
 
 import pandas as pd
-from bs4 import BeautifulSoup
 
-from jesper.scraper import get_page_content
+from jesper.scraper import get_page_content, get_page_content_browserless
 
 
 def scrape_roic(ticker: str) -> pd.DataFrame:
@@ -12,7 +11,8 @@ def scrape_roic(ticker: str) -> pd.DataFrame:
     # Construct the url.
     url = f"https://roic.ai/financials/{ticker}?fs=annual"
     # Get the data.
-    data = get_page_content(url)
+    # data = get_page_content(url)
+    data = get_page_content_browserless(url)
     #
     # data["props"]["pageProps"]["data"]["data"]
     #

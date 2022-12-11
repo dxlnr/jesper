@@ -1,12 +1,30 @@
 """Basic Scraping functions."""
 import json
+import random
 from typing import Dict
 
 import backoff
 import requests
 from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 
-from jesper.scraper.user_agents import USER_AGENTS
+from jesper.scraper.chrome_user_agents import CHROME_USER_AGENTS
+
+
+ROIC_HEADERS = {
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.5",
+    "Accept-Encoding": "gzip, deflate, br",
+    "DNT": "1",
+    "Alt-Used": "roic.ai",
+    "Connection": "keep-alive",
+    # 'Cookie': '',
+    "Upgrade-Insecure-Requests": "1",
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "cross-site",
+}
 
 
 def get_event_page(url: str):
@@ -27,12 +45,13 @@ def get_event_page(url: str):
     return page_content
 
 
-def get_page_content(url: str):
+def get_page_content(
+    url: str
+):
     """Scrapes a webpage and returns a BeautifulSoup doc."""
-    # Pick up a random user agent header.
-    user_agent = random.choice(USER_AGENTS)
-    # 
-    headers = {'User-Agent': user_agent}
+    # Construct headers dictionary.
+    headers = ROIC_HEADERS
+    headers["User-Agent"] = random.choice(CHROME_USER_AGENTS)
     # Pull data from link.
     try:
         page_response = requests.get(url, headers=headers, timeout=1000)
@@ -41,6 +60,25 @@ def get_page_content(url: str):
     # Structure raw data for parsing.
     page_content = BeautifulSoup(page_response.content, features="html.parser")
     # Return structured data.
+    return json.loads(page_content.select_one("#__NEXT_DATA__").text)
+
+
+def get_page_content_browserless(
+    url: str, browser_driver: str = "/usr/lib/chromium-browser/chromedriver"
+):
+    """Scrapes a webpage and returns a BeautifulSoup doc."""
+    # Construct User Agent.
+    user_agent = random.choice(CHROME_USER_AGENTS)
+    # Add Options
+    options = Options()
+    options.add_argument(f'user-agent={user_agent}')
+    # Boot up the selenium browser
+    driver = webdriver.Chrome(browser_driver, options=options)
+    driver.get(url)
+    page_source = driver.page_source
+    # Structure raw data for parsing.
+    page_content = BeautifulSoup(page_source, features="html.parser")
+
     return json.loads(page_content.select_one("#__NEXT_DATA__").text)
 
 
