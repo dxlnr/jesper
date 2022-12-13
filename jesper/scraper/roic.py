@@ -3,7 +3,7 @@ from typing import Dict, List
 
 import pandas as pd
 
-from jesper.scraper import get_page_content, get_page_content_browserless
+from jesper.scraper import get_page_content_browserless
 
 
 def scrape_roic(ticker: str) -> pd.DataFrame:
@@ -11,7 +11,6 @@ def scrape_roic(ticker: str) -> pd.DataFrame:
     # Construct the url.
     url = f"https://roic.ai/financials/{ticker}?fs=annual"
     # Get the data.
-    # data = get_page_content(url)
     data = get_page_content_browserless(url)
     #
     # data["props"]["pageProps"]["data"]["data"]
@@ -45,7 +44,7 @@ def scrape_roic(ticker: str) -> pd.DataFrame:
     cf_df = cf_df.loc[:, ~cf_df.columns.duplicated()]
 
     # Concat to one DataFrame
-    df = pd.concat([is_df, bs_df, cf_df], ignore_index=True)
+    df = pd.concat([is_df, bs_df, cf_df])
     # Remove duplicates
     df = df[~df.index.duplicated(keep="first")]
     return df

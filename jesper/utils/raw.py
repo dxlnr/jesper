@@ -12,7 +12,6 @@ from jesper.scraper.yahoo_finance import (
     get_timeseries_financial_statements,
 )
 from jesper.utils import get_project_root
-from jesper.utils.vis import print_full
 
 
 def save_stock_finance_info_to_csv(ticker: str, path: str = "data/roic"):

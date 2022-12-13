@@ -11,7 +11,6 @@ from selenium.webdriver.chrome.options import Options
 
 from jesper.scraper.chrome_user_agents import CHROME_USER_AGENTS
 
-
 ROIC_HEADERS = {
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
     "Accept-Language": "en-US,en;q=0.5",
@@ -30,10 +29,7 @@ ROIC_HEADERS = {
 def get_event_page(url: str):
     """Downloads a webpage and returns a BeautifulSoup doc."""
     # Web API headers.
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36\
-         (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36"
-    }
+    headers = {"User-Agent": random.choice(CHROME_USER_AGENTS)}
     # Pull data from link.
     try:
         page_response = requests.get(url, headers=headers, timeout=1000)
@@ -45,9 +41,7 @@ def get_event_page(url: str):
     return page_content
 
 
-def get_page_content(
-    url: str
-):
+def get_page_content(url: str):
     """Scrapes a webpage and returns a BeautifulSoup doc."""
     # Construct headers dictionary.
     headers = ROIC_HEADERS
@@ -71,9 +65,16 @@ def get_page_content_browserless(
     user_agent = random.choice(CHROME_USER_AGENTS)
     # Add Options
     options = Options()
-    options.add_argument(f'user-agent={user_agent}')
+    options.add_argument(f"user-agent={user_agent}")
+    chrome_options = webdriver.ChromeOptions()
+    chrome_options.add_argument("--disable-extensions")
+    chrome_options.add_argument("--incognito")
+
     # Boot up the selenium browser
-    driver = webdriver.Chrome(browser_driver, options=options)
+    driver = webdriver.Chrome(
+        browser_driver, options=options, chrome_options=chrome_options
+    )
+    driver.minimize_window()
     driver.get(url)
     page_source = driver.page_source
     # Structure raw data for parsing.

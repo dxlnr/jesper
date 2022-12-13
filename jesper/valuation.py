@@ -10,7 +10,6 @@ from jesper.scraper.yahoo_finance import (
     get_timeseries_financial_statements,
 )
 from jesper.utils import get_project_root
-from jesper.utils.raw import save_statements_to_csv
 
 
 def _return_table(
@@ -113,7 +112,7 @@ def annual_report_readings(stock: str):
 
 def iv_roic(
     stock: str,
-    compound_rate: float = 0.1,
+    compound_rate: float = 0.05,
     discount_rate: float = 0.15,
     terminal_value: int = 10,
     terms: int = 5,
@@ -162,6 +161,15 @@ def iv_roic(
     df.at[0, "Average Growth Rate"] = calc_avg_growth_rate(
         list(fin_df.loc["freeCashFlow"].iloc[:terms].astype(float))
     )
+
+    # Adjust the compound rate
+    if df.at[0, "Average Growth Rate"] >= 0.1:
+        compound_rate = 0.1
+    elif df.at[0, "Average Growth Rate"] < 0:
+        compound_rate = 0.025
+    else:
+        compound_rate = df.at[0, "Average Growth Rate"]
+
     # Calculating Owners Earnings / Free Cash Flow (FCF)
     if free_cash_flow:
         try:
@@ -173,7 +181,7 @@ def iv_roic(
         df.at[0, "Owners Earnings"] = earnings.iloc[0]
 
     # Find the DCF (Discounted Cash Flow) Multiplier
-    dfc = [compound(df.at[0, "Average Growth Rate"], y) for y in range(1, terms + 1)]
+    dfc = [compound(compound_rate, y) for y in range(1, terms + 1)]
     dfd = [discount(discount_rate, y) for y in range(1, terms + 1)]
     amounts = list(map(lambda x, y: x * y, dfc, dfd))
 

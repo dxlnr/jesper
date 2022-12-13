@@ -12,6 +12,7 @@ from jesper.valuation import intrinsic_value, iv_roic
 def create_eval_table(
     headers: List[str] = [
         "stock",
+        "avg growth rate",
         "intrinsic value",
         "latest stock price",
         "safety margin",
@@ -71,6 +72,7 @@ def eval_value_based_stocks(
 
         # Fill up the dataframe.
         df.at[idx, "stock"] = stock
+        df.at[idx, "avg growth rate"] = iv_df["Average Growth Rate"].iloc[0]
         df.at[idx, "latest stock price"] = latest_stock_price
         if len(iv_df.index) != 0:
             df.at[idx, "intrinsic value"] = float(iv_df["Per Share"].iloc[0])
@@ -82,6 +84,8 @@ def eval_value_based_stocks(
                 )
 
     df["intrinsic value"] = df["intrinsic value"].astype(float).round(2)
+    df["avg growth rate"] = df["avg growth rate"].astype(float).round(4)
+    df["safety margin"] = df["safety margin"].astype(float).round(4)
     df.set_index("stock", inplace=True)
 
     if save_results_file:
