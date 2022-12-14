@@ -65,6 +65,7 @@ def get_page_content_browserless(
     user_agent = random.choice(CHROME_USER_AGENTS)
     # Add Options
     options = Options()
+    options.add_argument("--headless")
     options.add_argument(f"user-agent={user_agent}")
     chrome_options = webdriver.ChromeOptions()
     chrome_options.add_argument("--disable-extensions")
@@ -74,12 +75,14 @@ def get_page_content_browserless(
     driver = webdriver.Chrome(
         browser_driver, options=options, chrome_options=chrome_options
     )
-    driver.minimize_window()
+    # driver.minimize_window()
     driver.get(url)
+    # driver.get_screenshot_as_file(f"{url}.png")
     page_source = driver.page_source
     # Structure raw data for parsing.
     page_content = BeautifulSoup(page_source, features="html.parser")
 
+    driver.close()
     return json.loads(page_content.select_one("#__NEXT_DATA__").text)
 
 

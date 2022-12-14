@@ -18,6 +18,7 @@ def _return_table(
         "depreciation",
         "capex",
         "Owners Earnings",
+        "terms",
         "Average Growth Rate",
         "Intrinsic Value",
         "Outstanding Shares",
@@ -41,7 +42,7 @@ def get_financials(stock: str, path_to_csv: str = "") -> pd.DataFrame:
     """
     # Construct file path.
     fpath = os.path.join(get_project_root(), path_to_csv, f"{stock}.csv")
-    if os.path.exists(fpath):
+    if os.path.isfile(fpath):
         print(f"Reading financial information for {stock} from {fpath}.")
         # Read the information.
         df = pd.read_csv(fpath, index_col=0, na_values="(missing)")
@@ -132,7 +133,8 @@ def iv_roic(
     :param stock: Acronym of specific stock. E.g. "AAPL" for the Apple Inc.
     :param compound_rate:
     :param discount_rate:
-    :param terms:
+    :param terms: Defines the number of terms going back in history as well as
+        calculate forward.
     :param scrape: Boolean to define whether the data should be scraped from
         webpage or read from .csv file.
     :returns: pd.DataFrame holding all the relevant information regarding the
@@ -141,19 +143,31 @@ def iv_roic(
     # Read from .csv or scrape and return data frame.
     fin_df = get_financials(stock, path_to_csv=path_to_csv)
 
+    print(fin_df)
+
     # Construct results table.
     df = _return_table()
 
+    if terms >= len(fin_df.columns):
+        terms = len(fin_df.columns)
+
+    print(type(terms))
+    print(terms)
+    # Save the terms number
+    df.at[0, "terms"] = terms
+
     try:
-        df.at[0, "operatingIncome"] = int(fin_df.loc["operatingIncome"].iat[0])
+        print("lol")
+        df.at[0, "operatingIncome"] = fin_df.loc["operatingIncome"].iat[0]
     except:
+        print("except")
         df.at[0, "operatingIncome"] = None
     try:
-        df.at[0, "depreciation"] = int(fin_df.loc["depreciationAndAmortization"].iat[0])
+        df.at[0, "depreciation"] = fin_df.loc["depreciationAndAmortization"].iat[0]
     except:
         df.at[0, "depreciation"] = None
     try:
-        df.at[0, "capex"] = int(fin_df.loc["capitalExpenditure"].iat[0])
+        df.at[0, "capex"] = fin_df.loc["capitalExpenditure"].iat[0]
     except:
         df.at[0, "capex"] = None
 
@@ -173,11 +187,11 @@ def iv_roic(
     # Calculating Owners Earnings / Free Cash Flow (FCF)
     if free_cash_flow:
         try:
-            df.at[0, "Owners Earnings"] = int(fin_df.loc["freeCashFlow"].iat[0])
+            df.at[0, "Owners Earnings"] = fin_df.loc["freeCashFlow"].iat[0]
         except:
             df.at[0, "Owners Earnings"] = None
     else:
-        earnings = df["operatingIncome"] + df["depreciation"] - df["capex"]
+        earnings = df["operatingIncome"].astype(float) + df["depreciation"].astype(float) - df["capex"].astype(float)
         df.at[0, "Owners Earnings"] = earnings.iloc[0]
 
     # Find the DCF (Discounted Cash Flow) Multiplier

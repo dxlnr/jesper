@@ -12,9 +12,10 @@ from jesper.valuation import intrinsic_value, iv_roic
 def create_eval_table(
     headers: List[str] = [
         "stock",
+        "terms",
         "avg growth rate",
         "intrinsic value",
-        "latest stock price",
+        "stock price",
         "safety margin",
     ]
 ) -> pd.DataFrame:
@@ -44,13 +45,10 @@ def eval_value_based_stocks(
     :param terms:
     :returns pd.DataFrame:
         Table that holds holds the intrinsic value and compares to current price.
-                intrinsic value latest stock price    safety margin
+               terms  avg growth rate  intrinsic value  stock price  safety margin
         stock
-        LW              148.64              87.73  59.02%
-        AXP             545.93             156.75  28.71%
-        ON              159.58              73.04  45.77%
-        SLB             135.73              52.79  38.89%
-        EQR             180.27              64.11  35.56%
+        TGT       10           0.2033           428.34       150.63     35.17%
+        AXP                          545.93       156.75     28.71%
     """
     # Instantiate resulting table.
     df = create_eval_table()
@@ -66,14 +64,16 @@ def eval_value_based_stocks(
             terms,
             path_to_csv=path_to_csv,
         )
+        print(iv_df)
         # Scrape the latest stock price from yahoo finance.
         url = f"https://finance.yahoo.com/quote/{stock}?p={stock}"
         latest_stock_price = scraper_to_latest_stock_price(url)
 
         # Fill up the dataframe.
         df.at[idx, "stock"] = stock
+        df.at[idx, "terms"] = iv_df["terms"].iloc[0]
         df.at[idx, "avg growth rate"] = iv_df["Average Growth Rate"].iloc[0]
-        df.at[idx, "latest stock price"] = latest_stock_price
+        df.at[idx, "stock price"] = latest_stock_price
         if len(iv_df.index) != 0:
             df.at[idx, "intrinsic value"] = float(iv_df["Per Share"].iloc[0])
             if iv_df["Per Share"].iloc[0] == 0.0:
