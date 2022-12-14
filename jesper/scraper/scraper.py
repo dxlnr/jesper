@@ -2,6 +2,7 @@
 import json
 import random
 from typing import Dict
+from datetime import datetime, timedelta
 
 import backoff
 import requests
@@ -10,8 +11,10 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
 from jesper.scraper.chrome_user_agents import CHROME_USER_AGENTS
+from jesper.utils.misc import format_date
 
-ROIC_HEADERS = {
+
+ROIC_HEADER = {
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
     "Accept-Language": "en-US,en;q=0.5",
     "Accept-Encoding": "gzip, deflate, br",
@@ -26,8 +29,38 @@ ROIC_HEADERS = {
 }
 
 
-def get_event_page(url: str):
+def get_yf_header(symbol: str, start, end, filter: str = "history"):
+    """Constructs the yahoo finance header."""
+    subdomain = f"/quote/{symbol}/history?period1={start}&period2={end}&interval=1d&filter={filter}&frequency=1d"
+
+    hdrs = {
+        "authority": "finance.yahoo.com",
+        "method": "GET",
+        "path": subdomain,
+        "scheme": "https",
+        "accept": "text/html",
+        "accept-encoding": "gzip, deflate, br",
+        "accept-language": "en-US,en;q=0.9",
+        "cache-control": "no-cache",
+        "dnt": 1,
+        "pragma": "no-cache",
+        "sec-fetch-mode": "navigate",
+        "sec-fetch-site": "same-origin",
+        "sec-fetch-user": "?1",
+        "upgrade-insecure-requests": 1,
+    }
+
+    return hdrs
+
+
+def get_event_page(url: str, ticker: str):
     """Downloads a webpage and returns a BeautifulSoup doc."""
+    # Time variables for header.
+    start = format_date(datetime.today() - timedelta(days=365))
+    end = format_date(datetime.today())
+
+    #
+    headers = get_yf_header(ticker, start, end)
     # Web API headers.
     headers = {"User-Agent": random.choice(CHROME_USER_AGENTS)}
     # Pull data from link.
@@ -39,22 +72,6 @@ def get_event_page(url: str):
     page_content = BeautifulSoup(page_response.content, features="html.parser")
 
     return page_content
-
-
-def get_page_content(url: str):
-    """Scrapes a webpage and returns a BeautifulSoup doc."""
-    # Construct headers dictionary.
-    headers = ROIC_HEADERS
-    headers["User-Agent"] = random.choice(CHROME_USER_AGENTS)
-    # Pull data from link.
-    try:
-        page_response = requests.get(url, headers=headers, timeout=1000)
-    except:
-        raise Exception(f"Failed to load page {url}.")
-    # Structure raw data for parsing.
-    page_content = BeautifulSoup(page_response.content, features="html.parser")
-    # Return structured data.
-    return json.loads(page_content.select_one("#__NEXT_DATA__").text)
 
 
 def get_page_content_browserless(

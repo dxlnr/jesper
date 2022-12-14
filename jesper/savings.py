@@ -7,7 +7,7 @@ from jesper.utils.raw import save_stock_finance_info_to_csv
 
 
 def save_financial_info_roic(
-    stocks: List[str], path: str = "data/roic", max_threads: int = 10, 
+    stocks: List[str], path: str = "data/roic", max_threads: int = 10,
 ) -> None:
     """Saves scraped pandas dataframes to .csv file in concurrent fashion.
     

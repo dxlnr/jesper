@@ -1,5 +1,5 @@
 """Miscellaneous Helper Functions"""
-import itertools
+import time
 from pathlib import Path
 from typing import Dict
 
@@ -10,7 +10,7 @@ def get_project_root() -> Path:
 
 def findkeys(node: Dict, kv: str):
     """Finds key in nested dictionary.
-    
+
     :param node: Dictionary to search the key.
     :param kv: Key to search for.
     """
@@ -45,3 +45,11 @@ def peek(iterable):
     except StopIteration:
         return None
     return first
+
+
+def format_date(date_datetime):
+    """."""
+    date_timetuple = date_datetime.timetuple()
+    date_mktime = time.mktime(date_timetuple)
+    date_int = int(date_mktime)
+    return str(date_int)

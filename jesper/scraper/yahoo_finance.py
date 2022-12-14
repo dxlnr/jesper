@@ -414,13 +414,13 @@ def get_timeseries_financial_statements(
     )
 
 
-def scraper_to_latest_stock_price(url: str) -> float:
+def scraper_to_latest_stock_price(url: str, stock: str = "") -> float:
     """Scrape yahoo finance for latest stock price.
 
     :param url: API endpoint as str.
     """
     # Scrape raw data for parsing.
-    page_content = get_event_page(url)
+    page_content = get_event_page(url, stock)
     # Get closing price.
     price = page_content.find(
         "fin-streamer", {"class": "Fw(b) Fz(36px) Mb(-4px) D(ib)"}

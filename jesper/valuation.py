@@ -5,10 +5,6 @@ from typing import List
 import pandas as pd
 
 from jesper.scraper.roic import scrape_roic
-from jesper.scraper.yahoo_finance import (
-    get_financial_info,
-    get_timeseries_financial_statements,
-)
 from jesper.utils import get_project_root
 
 
@@ -20,6 +16,9 @@ def _return_table(
         "Owners Earnings",
         "terms",
         "Average Growth Rate",
+        "Compound Rate",
+        "Discount Rate",
+        "Terminal Value",
         "Intrinsic Value",
         "Outstanding Shares",
         "Per Share",
@@ -131,8 +130,14 @@ def iv_roic(
     almost inevitably come up with slightly different intrinsic value figures.
 
     :param stock: Acronym of specific stock. E.g. "AAPL" for the Apple Inc.
-    :param compound_rate:
-    :param discount_rate:
+    :param compound_rate: Assumption about the company’s future growth.
+    :param discount_rate: Increase the discount rate above treasury rates
+        to reflect a more normalized interest rate environment.
+    :param terminal_value: Entire rest of the business’s future cash flows.
+        There are multiple ways to calculate this, but the terminal multiple is the easiest method.
+        Basically, we are multiplying the year 10’s cash flows and
+        discounting by our discount rate.
+        Default: 10x.
     :param terms: Defines the number of terms going back in history as well as
         calculate forward.
     :param scrape: Boolean to define whether the data should be scraped from
@@ -143,24 +148,18 @@ def iv_roic(
     # Read from .csv or scrape and return data frame.
     fin_df = get_financials(stock, path_to_csv=path_to_csv)
 
-    print(fin_df)
-
     # Construct results table.
     df = _return_table()
 
     if terms >= len(fin_df.columns):
         terms = len(fin_df.columns)
 
-    print(type(terms))
-    print(terms)
     # Save the terms number
     df.at[0, "terms"] = terms
 
     try:
-        print("lol")
         df.at[0, "operatingIncome"] = fin_df.loc["operatingIncome"].iat[0]
     except:
-        print("except")
         df.at[0, "operatingIncome"] = None
     try:
         df.at[0, "depreciation"] = fin_df.loc["depreciationAndAmortization"].iat[0]
@@ -177,12 +176,19 @@ def iv_roic(
     )
 
     # Adjust the compound rate
-    if df.at[0, "Average Growth Rate"] >= 0.1:
+    if df.at[0, "Average Growth Rate"] >= 0.15:
         compound_rate = 0.1
+    elif df.at[0, "Average Growth Rate"] >= 0.1:
+        compound_rate = 0.075
     elif df.at[0, "Average Growth Rate"] < 0:
         compound_rate = 0.025
     else:
         compound_rate = df.at[0, "Average Growth Rate"]
+
+    # Carry along important values that are set manually by the investor.
+    df.at[0, "Compound Rate"] = compound_rate
+    df.at[0, "Discount Rate"] = discount_rate
+    df.at[0, "Terminal Value"] = terminal_value
 
     # Calculating Owners Earnings / Free Cash Flow (FCF)
     if free_cash_flow:
@@ -191,7 +197,11 @@ def iv_roic(
         except:
             df.at[0, "Owners Earnings"] = None
     else:
-        earnings = df["operatingIncome"].astype(float) + df["depreciation"].astype(float) - df["capex"].astype(float)
+        earnings = (
+            df["operatingIncome"].astype(float)
+            + df["depreciation"].astype(float)
+            - df["capex"].astype(float)
+        )
         df.at[0, "Owners Earnings"] = earnings.iloc[0]
 
     # Find the DCF (Discounted Cash Flow) Multiplier

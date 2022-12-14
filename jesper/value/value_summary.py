@@ -75,13 +75,16 @@ def get_value_summary(input_df: pd.DataFrame) -> pd.DataFrame:
 
     df.loc["revenue"] = input_df.loc["revenue"].astype(int)
 
-    df.loc["roic"] = ((
-        input_df.loc["netIncome"].astype(float)
-        * input_df.loc["netIncomeRatio"].astype(float).apply(lambda x: 1 - x)
-        / (
-            input_df.loc["totalLiabilities"].astype(float)
-            - input_df.loc["totalCurrentLiabilities"].astype(float)
+    df.loc["roic"] = (
+        (
+            input_df.loc["netIncome"].astype(float)
+            * input_df.loc["netIncomeRatio"].astype(float).apply(lambda x: 1 - x)
+            / (
+                input_df.loc["totalLiabilities"].astype(float)
+                - input_df.loc["totalCurrentLiabilities"].astype(float)
+            )
         )
-    )).round(4)
+    ).round(4)
 
     print(df)
+    return df

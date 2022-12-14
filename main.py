@@ -1,4 +1,5 @@
 """Main Entrypoint"""
+from tabulate import tabulate
 
 from jesper.eval_sheet import eval_value_based_stocks
 from jesper.savings import save_financial_info_roic
@@ -27,19 +28,17 @@ def main():
 
     # # Calculate evaluation facilitating value based investing.
     # single = ["TGT"]
-    single = ["TSM"]
-    # df = eval_value_based_stocks(single, path_to_csv="data/roic/sp500")
-    df = eval_value_based_stocks(single, path_to_csv="data/roic/nyse")
+    single = ["META", "NVDA"]
+    df = eval_value_based_stocks(single, path_to_csv="data/roic/sp500")
+    # df = eval_value_based_stocks(single, path_to_csv="data/roic/nyse")
     # df = eval_value_based_stocks(
     #     sp500[:100], path_to_csv="data/roic/sp500", save_results_file="iv_sp500_0_100"
     # )
     # Apply styling for highlighting outstanding values.
     df["intrinsic value"] = df["intrinsic value"].astype(float).round(2)
     df["safety margin"] = df["safety margin"].apply(color_low_safety_margin_green)
-    df.style.set_properties(**{'text-align': 'left'})
     # Print final results.
-    # print("\n", df, "\n")
-    print_full(df)
+    print("\n", tabulate(df, showindex=True, headers=df.columns), "\n")
 
 
 if __name__ == "__main__":

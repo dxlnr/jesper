@@ -6,14 +6,17 @@ import pandas as pd
 
 from jesper.scraper.yahoo_finance import scraper_to_latest_stock_price
 from jesper.utils import get_project_root
-from jesper.valuation import intrinsic_value, iv_roic
+from jesper.valuation import iv_roic
 
 
 def create_eval_table(
     headers: List[str] = [
         "stock",
         "terms",
-        "avg growth rate",
+        "cr",
+        "dr",
+        "tv",
+        "avg growth",
         "intrinsic value",
         "stock price",
         "safety margin",
@@ -40,15 +43,18 @@ def eval_value_based_stocks(
     useful for value based investing.
 
     :param stocks: List of stocks that should be evaluated.
-    :param compound_rate:
+    :param compound_rate: Assumption about the company’s future growth.
     :param discount_rate:
+    :param terminal_value:
     :param terms:
+    :param path_to_csv: Path to presaved .csv file in order to avoid scraping.
+    :param save_results_file: Specifies if results should be saved and where.
     :returns pd.DataFrame:
         Table that holds holds the intrinsic value and compares to current price.
-               terms  avg growth rate  intrinsic value  stock price  safety margin
+               terms  avg growth  intrinsic value  stock price  safety margin
         stock
-        TGT       10           0.2033           428.34       150.63     35.17%
-        AXP                          545.93       156.75     28.71%
+        TGT       10      0.2033           428.34       150.63     35.17%
+        TSM       10      0.3529           174.05        80.09     45.92%
     """
     # Instantiate resulting table.
     df = create_eval_table()
@@ -64,15 +70,17 @@ def eval_value_based_stocks(
             terms,
             path_to_csv=path_to_csv,
         )
-        print(iv_df)
         # Scrape the latest stock price from yahoo finance.
         url = f"https://finance.yahoo.com/quote/{stock}?p={stock}"
-        latest_stock_price = scraper_to_latest_stock_price(url)
+        latest_stock_price = scraper_to_latest_stock_price(url, stock)
 
         # Fill up the dataframe.
         df.at[idx, "stock"] = stock
         df.at[idx, "terms"] = iv_df["terms"].iloc[0]
-        df.at[idx, "avg growth rate"] = iv_df["Average Growth Rate"].iloc[0]
+        df.at[idx, "cr"] = iv_df["Compound Rate"].iloc[0]
+        df.at[idx, "dr"] = iv_df["Discount Rate"].iloc[0]
+        df.at[idx, "tv"] = iv_df["Terminal Value"].iloc[0]
+        df.at[idx, "avg growth"] = iv_df["Average Growth Rate"].iloc[0]
         df.at[idx, "stock price"] = latest_stock_price
         if len(iv_df.index) != 0:
             df.at[idx, "intrinsic value"] = float(iv_df["Per Share"].iloc[0])
@@ -84,7 +92,7 @@ def eval_value_based_stocks(
                 )
 
     df["intrinsic value"] = df["intrinsic value"].astype(float).round(2)
-    df["avg growth rate"] = df["avg growth rate"].astype(float).round(4)
+    df["avg growth"] = df["avg growth"].astype(float).round(4)
     df["safety margin"] = df["safety margin"].astype(float).round(4)
     df.set_index("stock", inplace=True)
 

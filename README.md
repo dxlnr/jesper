@@ -19,6 +19,8 @@ Intrinsic value is an all-important concept that offers the only logical approac
 
 For more [information](https://finmasters.com/intrinsic-value/).
 
+[Importance of ROIC](https://sabercapitalmgt.com/importance-of-roic-part-4-the-math-of-compounding/)
+
 ```python
 from jesper.eval_sheet import eval_value_based_stocks
 
