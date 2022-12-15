@@ -1,0 +1,7 @@
+flask
+flask-cors
+flasgger
+sqlalchemy
+psycopg2-binary
+toml
+bcrypt
