@@ -6,7 +6,7 @@ lxml
 pandas
 psycopg
 pyftpdlib
-python-dotenv
 requests
 tabulate
 selenium
+sqlalchemy

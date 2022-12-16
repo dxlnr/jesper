@@ -52,7 +52,9 @@ def csv_to_postgresql(csv_path: str, env: dict):
             host=env["PSQL_HOST"],
             port=env["PSQL_PORT"],
         ) as conn:
-            curser = conn.cursor()
+            cursor = conn.cursor()
+
+            cursor.execute("drop table if exists")
             print("success.")
-    except:
-        raise ConnectionError()
+    except (Exception, psycopg.DatabaseError) as err:
+        raise err
