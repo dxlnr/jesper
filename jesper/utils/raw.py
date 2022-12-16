@@ -7,8 +7,10 @@ import numpy as np
 import pandas as pd
 
 from jesper.scraper.roic import scrape_roic
-from jesper.scraper.yahoo_finance import (get_financial_info,
-                                          get_timeseries_financial_statements)
+from jesper.scraper.yahoo_finance import (
+    get_financial_info,
+    get_timeseries_financial_statements,
+)
 from jesper.utils import get_project_root
 
 
