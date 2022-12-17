@@ -1,25 +1,132 @@
 from sqlalchemy.orm import relationship
-from sqlalchemy import MetaData, Column, Integer, String, ForeignKey
+from sqlalchemy import MetaData, Column, Integer, String, ForeignKey, Float
 from sqlalchemy.ext.declarative import declarative_base
 
-metadata = MetaData()
-Base = declarative_base(metadata=metadata)
-
-
-class Stocks(Base):
-    __tablename__ = "stocks_table"
-    id = Column(Integer, primary_key=True, autoincrement="auto")
-
-    tickers = relationship("Stock", back_populates="stocks")
-
-    def __init__(self, **kwargs):
-        super(Stocks, self).__init__(**kwargs)
-
+Base = declarative_base(metadata=MetaData())
+# base = declarative_base()
 
 class Stock(Base):
-    __tablename__ = "stock_table"
-    id = Column(Integer, primary_key=True, autoincrement="auto")
-    ticker = Column(String(128), unique=True, nullable=False)
+    __tablename__ = "stocks"
+    ticker = Column(String(128), primary_key=True, unique=True, nullable=False)
 
-    stocks_id = Column(Integer, ForeignKey('stocks_table.id'), nullable=False)
-    stocks = relationship("Stocks", back_populates='tickers')
+    data = relationship("Data", back_populates="stock")
+
+    # def __init__(self, **kwargs):
+    #     super(Stock, self).__init__(**kwargs)
+
+
+class Data(Base):
+    __tablename__ = 'data'
+    ticker = Column(String(128), primary_key=True, unique=True, nullable=False)
+
+#     # __table_args__ = (
+#     #         ForeignKeyConstraint(['id'], ['remote_table.id']),
+#     #         UniqueConstraint('foo'),
+#     #         {'autoload':True}
+#     #         )
+
+    stock_id = Column(String(128), ForeignKey("stocks.ticker"))
+    stock = relationship("Stock", back_populates="data")
+    
+#     reportedCurrency = Column(String(128), unique=True, nullable=True) 
+#     fillingDate = Column(String(128), unique=True, nullable=True)  
+#     acceptedDate = Column(String(128), unique=True, nullable=True)  
+#     revenue = Column(Float, unique=True, nullable=True)  
+#     costOfRevenue = Column(Float, unique=True, nullable=True)  
+#     grossProfit = Column(Float, unique=True, nullable=True)  
+#     grossProfitRatio = Column(Float, unique=True, nullable=True)  
+#     researchAndDevelopmentExpenses = Column(Float, unique=True, nullable=True)  
+#     generalAndAdministrativeExpenses = Column(Float, unique=True, nullable=True)  
+#     sellingAndMarketingExpenses = Column(Float, unique=True, nullable=True)  
+#     sellingGeneralAndAdministrativeExpenses = Column(Float, unique=True, nullable=True)  
+#     otherExpenses = Column(Float, unique=True, nullable=True)  
+#     operatingExpenses = Column(Float, unique=True, nullable=True)  
+#     costAndExpenses = Column(Float, unique=True, nullable=True)  
+#     interestIncome = Column(Float, unique=True, nullable=True)  
+#     interestExpense = Column(Float, unique=True, nullable=True)  
+#     depreciationAndAmortization = Column(Float, unique=True, nullable=True)  
+#     ebitda = Column(Float, unique=True, nullable=True)  
+#     ebitdaratio = Column(Float, unique=True, nullable=True)  
+#     operatingIncome = Column(Float, unique=True, nullable=True)  
+#     operatingIncomeRatio = Column(Float, unique=True, nullable=True)  
+#     totalOtherIncomeExpensesNet = Column(Float, unique=True, nullable=True)  
+#     incomeBeforeTax = Column(Float, unique=True, nullable=True)  
+#     incomeBeforeTaxRatio = Column(Float, unique=True, nullable=True)  
+#     incomeTaxExpense = Column(Float, unique=True, nullable=True)  
+#     netIncome = Column(Float, unique=True, nullable=True)  
+#     netIncomeRatio = Column(Float, unique=True, nullable=True)  
+#     eps = Column(Float, unique=True, nullable=True)  
+#     epsdiluted = Column(Float, unique=True, nullable=True)  
+#     weightedAverageShsOut = Column(Float, unique=True, nullable=True)  
+#     weightedAverageShsOutDil = Column(Float, unique=True, nullable=True)  
+#     cashAndCashEquivalents = Column(Float, unique=True, nullable=True)  
+#     shortTermInvestments = Column(Float, unique=True, nullable=True)  
+#     cashAndShortTermInvestments = Column(Float, unique=True, nullable=True)  
+#     netReceivables = Column(Float, unique=True, nullable=True)  
+#     inventory = Column(Float, unique=True, nullable=True)  
+#     otherCurrentAssets = Column(Float, unique=True, nullable=True)  
+#     totalCurrentAssets = Column(Float, unique=True, nullable=True)  
+#     propertyPlantEquipmentNet = Column(Float, unique=True, nullable=True)  
+#     goodwill = Column(Float, unique=True, nullable=True)  
+#     intangibleAssets = Column(Float, unique=True, nullable=True)  
+#     goodwillAndIntangibleAssets = Column(Float, unique=True, nullable=True)  
+#     longTermInvestments = Column(Float, unique=True, nullable=True)  
+#     taxAssets = Column(Float, unique=True, nullable=True)  
+#     otherNonCurrentAssets = Column(Float, unique=True, nullable=True)  
+#     totalNonCurrentAssets = Column(Float, unique=True, nullable=True)  
+#     otherAssets = Column(Float, unique=True, nullable=True)  
+#     totalAssets = Column(Float, unique=True, nullable=True)  
+#     accountPayables = Column(Float, unique=True, nullable=True)  
+#     shortTermDebt = Column(Float, unique=True, nullable=True)  
+#     taxPayables = Column(Float, unique=True, nullable=True)  
+#     deferredRevenue = Column(Float, unique=True, nullable=True)  
+#     otherCurrentLiabilities = Column(Float, unique=True, nullable=True)  
+#     totalCurrentLiabilities = Column(Float, unique=True, nullable=True)  
+#     longTermDebt = Column(Float, unique=True, nullable=True)  
+#     deferredRevenueNonCurrent = Column(Float, unique=True, nullable=True)  
+#     deferredTaxLiabilitiesNonCurrent = Column(Float, unique=True, nullable=True)  
+#     otherNonCurrentLiabilities = Column(Float, unique=True, nullable=True)  
+#     totalNonCurrentLiabilities = Column(Float, unique=True, nullable=True)  
+#     otherLiabilities = Column(Float, unique=True, nullable=True)  
+#     capitalLeaseObligations = Column(Float, unique=True, nullable=True)  
+#     totalLiabilities = Column(Float, unique=True, nullable=True)  
+#     preferredStock = Column(Float, unique=True, nullable=True)  
+#     commonStock = Column(Float, unique=True, nullable=True)  
+#     retainedEarnings = Column(Float, unique=True, nullable=True)  
+#     accumulatedOtherComprehensiveIncomeLoss = Column(Float, unique=True, nullable=True)  
+#     othertotalStockholdersEquity = Column(Float, unique=True, nullable=True)  
+#     totalStockholdersEquity = Column(Float, unique=True, nullable=True)  
+#     totalLiabilitiesAndStockholdersEquity = Column(Float, unique=True, nullable=True)  
+#     minorityInterest = Column(Float, unique=True, nullable=True)  
+#     totalEquity = Column(Float, unique=True, nullable=True)  
+#     totalLiabilitiesAndTotalEquity = Column(Float, unique=True, nullable=True)  
+#     totalInvestments = Column(Float, unique=True, nullable=True)  
+#     totalDebt = Column(Float, unique=True, nullable=True)  
+#     netDebt = Column(Float, unique=True, nullable=True)  
+#     deferredIncomeTax = Column(Float, unique=True, nullable=True)  
+#     stockBasedCompensation = Column(Float, unique=True, nullable=True)  
+#     changeInWorkingCapital = Column(Float, unique=True, nullable=True)  
+#     accountsReceivables = Column(Float, unique=True, nullable=True)  
+#     accountsPayables = Column(Float, unique=True, nullable=True)  
+#     otherWorkingCapital = Column(Float, unique=True, nullable=True)  
+#     otherNonCashItems = Column(Float, unique=True, nullable=True)  
+#     netCashProvidedByOperatingActivities = Column(Float, unique=True, nullable=True)  
+#     investmentsInPropertyPlantAndEquipment = Column(Float, unique=True, nullable=True)  
+#     acquisitionsNet = Column(Float, unique=True, nullable=True)  
+#     purchasesOfInvestments = Column(Float, unique=True, nullable=True)  
+#     salesMaturitiesOfInvestments = Column(Float, unique=True, nullable=True) 
+#     otherInvestingActivites = Column(Float, unique=True, nullable=True)  
+#     netCashUsedForInvestingActivites = Column(Float, unique=True, nullable=True)  
+#     debtRepayment = Column(Float, unique=True, nullable=True)  
+#     commonStockIssued = Column(Float, unique=True, nullable=True)  
+#     commonStockRepurchased = Column(Float, unique=True, nullable=True)  
+#     dividendsPaid = Column(Float, unique=True, nullable=True)  
+#     otherFinancingActivites = Column(Float, unique=True, nullable=True)  
+#     netCashUsedProvidedByFinancingActivities = Column(Float, unique=True, nullable=True)  
+#     effectOfForexChangesOnCash = Column(Float, unique=True, nullable=True)  
+#     netChangeInCash = Column(Float, unique=True, nullable=True)  
+#     cashAtEndOfPeriod = Column(Float, unique=True, nullable=True)  
+#     cashAtBeginningOfPeriod = Column(Float, unique=True, nullable=True)  
+#     operatingCashFlow = Column(Float, unique=True, nullable=True) 
+#     capitalExpenditure = Column(Float, unique=True, nullable=True)  
+#     freeCashFlow = Column(Float, unique=True, nullable=True) 

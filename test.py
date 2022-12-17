@@ -1,7 +1,7 @@
 from jesper.sql.pd_to_sql import csv_to_postgresql
-# from jesper.sql.env import get_env_data_as_dict
+from jesper.sql.db_tables import Stock, Data, Base
 import pandas as pd
-from sqlalchemy import create_engine
+from sqlalchemy import MetaData, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 
@@ -15,38 +15,63 @@ print(sql_str)
 
 engine = create_engine(env.get_uri_sqlalchemy(), echo=True)
 
+session = Session(engine)
+Base.metadata.create_all(engine)
+# base = declarative_base()
+
 aapl_df = pd.read_csv('data/AAPL.csv', index_col=0, na_values="(missing)")
 
-# print(aapl_df.transpose())
+tmp = aapl_df.transpose()
+print(list(tmp.columns))
 
-aapl_df.to_sql(
-    'data',
-    engine,
-    if_exists='replace',
-    index=True,
-    chunksize=500,
-    # dtype={
-    #     "job_id": Integer,
-    #     "agency": Text,
-    #     "business_title": Text,
-    #     "job_category":  Text,
-    #     "salary_range_from": Integer,
-    #     "salary_range_to": Integer,
-    #     "salary_frequency": String(50),
-    #     "work_location": Text,
-    #     "division/work_unit": Text,
-    #     "job_description": Text,
-    #     "posting_date": DateTime,
-    #     "posting_updated": DateTime
-    # }
-)
+# stock = Stock(ticker="AAPL", fundamental_data=tmp.to_sql(
+#     'fundamental_data',
+#     engine,
+#     if_exists='replace',
+#     index=True,
+#     chunksize=500)
+# )
 
-table_df = pd.read_sql_table(
-    "data",
-    engine
-)
+# from sqlalchemy import Column, String  
+# class Stock(base):  
+#     __tablename__ = 'stocks'
 
-print(table_df.transpose())
+#     ticker = Column(String(128), primary_key=True, unique=True, nullable=False)
+
+# stock = Stock(ticker="AAPL")
+another_stock = Stock(ticker="META")
+session.add(another_stock)
+session.commit()
+
+
+# aapl_df.to_sql(
+#     'data',
+#     engine,
+#     if_exists='replace',
+#     index=True,
+#     chunksize=500,
+#     # dtype={
+#     #     "job_id": Integer,
+#     #     "agency": Text,
+#     #     "business_title": Text,
+#     #     "job_category":  Text,
+#     #     "salary_range_from": Integer,
+#     #     "salary_range_to": Integer,
+#     #     "salary_frequency": String(50),
+#     #     "work_location": Text,
+#     #     "division/work_unit": Text,
+#     #     "job_description": Text,
+#     #     "posting_date": DateTime,
+#     #     "posting_updated": DateTime
+#     # }
+# )
+
+# table_df = pd.read_sql_table(
+#     "data",
+#     engine
+# )
+
+# print(table_df.transpose())
 # from jesper.sql.db_tables import Stocks, Stock
 
 # session = Session(engine)

@@ -48,3 +48,8 @@ df = annual_report_readings(stock)
 print(f"\n\t{stock}\n".expandtabs(4))
 print(readable_df(df))
 ```
+
+
+### Webscraping
+
+How to build and run [scrapers on a large scale](https://www.scrapehero.com/how-to-build-and-run-scrapers-on-a-large-scale/) and how to [prevent getting blacklisted](https://www.scrapehero.com/how-to-prevent-getting-blacklisted-while-scraping/) while scraping.

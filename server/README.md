@@ -13,7 +13,7 @@ psql --help
 # Inspect tables in DB.
 \dt
 # Inspect table content in DB.
-SELECT * FROM $tablename;
+SELECT * FROM $tablename ;
 ```
 
 Overall tutorial: [Install & setup PostgreSQL Server](https://www.cherryservers.com/blog/how-to-install-and-setup-postgresql-server-on-ubuntu-20-04).
