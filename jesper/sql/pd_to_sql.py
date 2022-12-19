@@ -6,11 +6,11 @@ import psycopg
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
-from jesper.sql.db_tables import base, Stock
+from jesper.sql.db_tables import Data, Stock, base
 from jesper.sql.env import DBEnv
 
 
-class JesperSQL():
+class JesperSQL:
     tables: list = [
         "revenue",
         "costOfRevenue",
@@ -118,12 +118,12 @@ class JesperSQL():
         self.env = env
         # Construct an Engine object, the starting point for any SQLAlchemy application.
         #
-        # The engine will request a connection from the underlying Pool 
-        # once Engine.connect() is called, 
+        # The engine will request a connection from the underlying Pool
+        # once Engine.connect() is called,
         # or a method which depends on it such as Engine.execute() is invoked.
         self.engine = create_engine(self.env.get_uri_sqlalchemy(), echo=True)
-        # Establish a Session. The Session establishes all conversations with the database 
-        # and represents a “holding zone” for all the objects which you’ve loaded 
+        # Establish a Session. The Session establishes all conversations with the database
+        # and represents a “holding zone” for all the objects which you’ve loaded
         # or associated with it during its lifespan.
         self.session = Session(self.engine)
         # Construct all metadata defined in the tables sections.
@@ -143,14 +143,18 @@ class JesperSQL():
             sqldf = sqldf.rename({t: str(df.loc["symbol"].iat[0])})
 
             sqldf.to_sql(
-                t,
-                self.engine,
-                if_exists='append',
-                index=True,
-                chunksize=500,
+                t, self.engine, if_exists="append", index=True, chunksize=500,
             )
-            # Adds stock ticker as primary key.
-            self.engine.execute(f'ALTER TABLE {t} ADD PRIMARY KEY (index);')
+            # Adds stock ticker as primary key for data table.
+            self.engine.execute(f"ALTER TABLE {t} ADD PRIMARY KEY (index);")
+            # Adds relationship to data table.
+            # c INT NOT NULL
+            # CONSTRAINT y_x_fk_c REFERENCES x (a)   -- if x (a) doens't exist, this will fail!
+            # ON UPDATE CASCADE ON DELETE CASCADE;
+            self.engine.execute(f"ALTER TABLE data ADD COLUMN {t} VARCHAR REFERENCES {t} (index) ON UPDATE CASCADE ON DELETE CASCADE;")
+            # self.engine.execute(f"ALTER TABLE data ADD CONSTRAINT {t} FOREIGN KEY (ticker) REFERENCES {t} (index);")
+            break
+
 
     def write(self, df: pd.DataFrame) -> None:
         """Writes a specific stock to DB."""
@@ -160,99 +164,75 @@ class JesperSQL():
             cik = str(df.loc["cik"].iat[0])
         except ValueError as err:
             raise ValueError(f"Parameter for stock not found. {err}.")
-        
+
         # Instantiate the stocks table.
         stock = Stock(ticker=ticker, cik=cik, reported_currency=reported_currency)
-        # Writes it to db.
-        self.session.add(stock)
-        self.session.commit()
+        # Instantiate the fundamental data table.
+        data = Data(ticker=ticker)
+
+        # Writes it to sql db.
+        try:
+            self.session.add(stock)
+            self.session.add(data)
+            self.session.commit()
+        except:
+            print(f"{ticker} already exists in DB.")
+
+        # Filling up the data tables.
+        self._single_data_pd_to_sql(df)
 
 
-
-# def pd_to_sql(df: pd.DataFrame) -> None:
-#     symbol = df.loc["symbol"].iat[0]
-#     rdf = df.loc[["revenue"]]
-#     rdf = rdf.rename({"revenue": str(symbol)})
-
-#     df.to_sql(
-#         'revenue',
-#         engine,
-#         if_exists='append',
-#         # if_exists='append',
-#         index=True,
-#         chunksize=500,
-#         # dtype={
-#         #     "job_id": Integer,
-#         #     "agency": Text,
-#         #     "business_title": Text,
-#         #     "job_category":  Text,
-#         #     "salary_range_from": Integer,
-#         #     "salary_range_to": Integer,
-#         #     "salary_frequency": String(50),
-#         #     "work_location": Text,
-#         #     "division/work_unit": Text,
-#         #     "job_description": Text,
-#         #     "posting_date": DateTime,
-#         #     "posting_updated": DateTime
-#         # }
-#         # dtype={
-#         #     'index': 'PRIMARY KEY',
-#         # }
-#     )
-
-#     engine.execute('ALTER TABLE revenue ADD PRIMARY KEY (index);')
+    def _clean_c_headers(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Takes a pandas DataFrame & returns it with cleaned up headers."""
+        df.columns = [
+            x.lower()
+            .replace(" ", "_")
+            .replace("?", "")
+            .replace("-", "_")
+            .replace(r"/", "_")
+            .replace("\\", "_")
+            .replace("%", "")
+            .replace(r")", "")
+            .replace(r"(", "")
+            .replace("$", "")
+            for x in df.columns
+        ]
+        return df
 
 
-def clean_c_headers(df: pd.DataFrame) -> pd.DataFrame:
-    """Takes a pandas DataFrame & returns it with cleaned up headers."""
-    df.columns = [
-        x.lower()
-        .replace(" ", "_")
-        .replace("?", "")
-        .replace("-", "_")
-        .replace(r"/", "_")
-        .replace("\\", "_")
-        .replace("%", "")
-        .replace(r")", "")
-        .replace(r"(", "")
-        .replace("$", "")
-        for x in df.columns
-    ]
-    return df
+    def _adjust_c_dtypes(self, df: pd.DataFrame):
+        """Takes a pandas DataFrame & returns it with adjusted dtypes for its columns."""
+        replacements = {
+            "object": "varchar",
+            "float64": "float",
+            "int64": "int",
+            "datetime64": "timestamp",
+            "timedelta64[ns]": "varchar",
+        }
+        col_str = ", ".join("{} {}")
 
 
-def adjust_dtype(df: pd.DataFrame):
-    replacements = {
-        "object": "varchar",
-        "float64": "float",
-        "int64": "int",
-        "datetime64": "timestamp",
-        "timedelta64[ns]": "varchar",
-    }
-    col_str = ", ".join("{} {}")
+# def csv_to_postgresql(csv_path: str, env: dict):
+#     """."""
+#     assert not all(
+#         k in env.items()
+#         for k in ("PSQL_PORT", "PSQL_HOST", "PSQL_DB_NAME", "PSQL_USER", "PSQL_PW")
+#     ), "keys are missing in .env \['PSQL_PORT', 'PSQL_HOST', 'PSQL_DB_NAME', 'PSQL_USER', 'PSQL_PW'\]."
 
+#     for k, v in env.items():
+#         print(type(v))
 
-def csv_to_postgresql(csv_path: str, env: dict):
-    """."""
-    assert not all(
-        k in env.items()
-        for k in ("PSQL_PORT", "PSQL_HOST", "PSQL_DB_NAME", "PSQL_USER", "PSQL_PW")
-    ), "keys are missing in .env \['PSQL_PORT', 'PSQL_HOST', 'PSQL_DB_NAME', 'PSQL_USER', 'PSQL_PW'\]."
+#     try:
+#         with psycopg.connect(
+#             dbname=env["PSQL_DB_NAME"],
+#             user=env["PSQL_USER"],
+#             password=env["PSQL_PW"],
+#             host=env["PSQL_HOST"],
+#             port=env["PSQL_PORT"],
+#         ) as conn:
+#             cursor = conn.cursor()
 
-    for k, v in env.items():
-        print(type(v))
-
-    try:
-        with psycopg.connect(
-            dbname=env["PSQL_DB_NAME"],
-            user=env["PSQL_USER"],
-            password=env["PSQL_PW"],
-            host=env["PSQL_HOST"],
-            port=env["PSQL_PORT"],
-        ) as conn:
-            cursor = conn.cursor()
-
-            cursor.execute("drop table if exists")
-            print("success.")
-    except (Exception, psycopg.DatabaseError) as err:
-        raise err
+#             cursor.execute("drop table if exists")
+#             print("success.")
+#     except (Exception, psycopg.DatabaseError) as err:
+#         raise err

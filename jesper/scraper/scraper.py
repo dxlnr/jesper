@@ -1,8 +1,8 @@
 """Basic Scraping functions."""
 import json
 import random
-from typing import Dict
 from datetime import datetime, timedelta
+from typing import Dict
 
 import backoff
 import requests
@@ -12,7 +12,6 @@ from selenium.webdriver.chrome.options import Options
 
 from jesper.scraper.chrome_user_agents import CHROME_USER_AGENTS
 from jesper.utils.misc import format_date
-
 
 ROIC_HEADER = {
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
