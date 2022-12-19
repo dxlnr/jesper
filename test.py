@@ -20,6 +20,12 @@ env.merge_from_file("server/.env")
 j_sql = JesperSQL(env)
 
 nvda_df = pd.read_csv('data/NVDA.csv', index_col=0, na_values="(missing)")
-print(nvda_df)
+aapl_df = pd.read_csv('data/AAPL.csv', index_col=0, na_values="(missing)")
+meta_df = pd.read_csv('data/META.csv', index_col=0, na_values="(missing)")
+# print(nvda_df)
 
-j_sql.write(nvda_df)
+# for s_df in [aapl_df, nvda_df, meta_df]:
+#     j_sql.write(s_df)
+
+df = j_sql.read("AAPL")
+print(df)

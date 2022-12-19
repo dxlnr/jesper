@@ -1,13 +1,10 @@
 """From Pandas to SQL Database"""
-import os
-
 import pandas as pd
-import psycopg2
 import sqlalchemy
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
-from jesper.sql.db_tables import Data, Stock, base
+from jesper.sql.db_tables import Stock, base
 from jesper.sql.env import DBEnv
 
 
@@ -166,18 +163,19 @@ class JesperSQL:
         for t in self.tables:
             sqldf = df.loc[[t]]
             sqldf = sqldf.rename({t: str(df.loc["symbol"].iat[0])})
-            # sqldf.insert(0, 'data_ticker', str(df.loc["symbol"].iat[0]))
+            sqldf.insert(0, 'param', str(t))
 
             # SQL clean up str.
             t = self._clean_str(t)
             if not self._table_exists(t):
+
                 sqldf.to_sql(
                     t, self.engine, if_exists="append", index=True, chunksize=500,
                 )
                 # Adds stock ticker as primary key for data table.
                 self.engine.execute(f"ALTER TABLE {t} ADD PRIMARY KEY (index);")
                 self.engine.execute(
-                    f"ALTER TABLE {t} ADD CONSTRAINT fk_data FOREIGN KEY(index) REFERENCES data (ticker);"
+                    f"ALTER TABLE {t} ADD CONSTRAINT fk_stocks FOREIGN KEY(index) REFERENCES stocks (ticker);"
                 )
             else:
                 try:
@@ -201,13 +199,10 @@ class JesperSQL:
 
         # Instantiate the stocks table.
         stock = Stock(ticker=ticker, cik=cik, reported_currency=reported_currency)
-        # Instantiate the fundamental data table.
-        data = Data(ticker=ticker)
 
         # Writes it to sql db.
         try:
             self.session.add(stock)
-            self.session.add(data)
             self.session.commit()
         except:
             print(f"{ticker} already exists in DB.")
@@ -215,11 +210,21 @@ class JesperSQL:
         # Filling up the data tables.
         self._single_data_pd_to_sql(df)
 
-    def read(self, ticker: str)  -> pd.DataFrame:
+    def read(self, ticker: str) -> pd.DataFrame:
         """Reads a specific stock from DB.
 
         :parma ticker: Stock ticker symbol determining the stock.
         :returns: pd.DataFrame containig all fundamental data of stock.
         """
-        pass
-    
+        for idx, t in enumerate(self.tables):
+            query = f"SELECT * FROM {self._clean_str(t)} WHERE index = '{ticker}';"
+            if idx == 0:
+                df = pd.read_sql(query, self.engine, index_col="param")
+                df = df.rename({ticker: t})
+            else:
+                t_df = pd.read_sql(query, self.engine, index_col="param")
+                t_df = t_df.rename({ticker: t})
+                df = pd.concat([df, t_df])
+
+        df = df.drop(columns=['index'])
+        return df
