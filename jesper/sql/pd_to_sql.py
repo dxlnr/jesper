@@ -2,7 +2,8 @@
 import os
 
 import pandas as pd
-import psycopg
+import psycopg2
+import sqlalchemy
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
@@ -131,6 +132,30 @@ class JesperSQL:
         # (or multiple databases) being described.
         base.metadata.create_all(self.engine)
 
+    def _table_exists(self, table_str: str) -> bool:
+        """Checks if specific table exists."""
+        return sqlalchemy.inspect(self.engine).has_table(table_str)
+
+    def _clean_c_headers(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Takes a pandas DataFrame & returns it with cleaned up headers."""
+        df.columns = [self._clean_str(x) for x in df.columns]
+        return df
+
+    def _clean_str(self, x: str) -> str:
+        """Cleans a str for riskfree SQL usage."""
+        return (
+            x.lower()
+            .replace(" ", "_")
+            .replace("?", "")
+            .replace("-", "_")
+            .replace(r"/", "_")
+            .replace("\\", "_")
+            .replace("%", "")
+            .replace(r")", "")
+            .replace(r"(", "")
+            .replace("$", "")
+        )
+
     def _single_data_pd_to_sql(self, df: pd.DataFrame) -> None:
         """Reads a single pandas DataFrame containing fundamental data of a
         particular stock. It then iterates over the data and writes the every row to the
@@ -141,23 +166,32 @@ class JesperSQL:
         for t in self.tables:
             sqldf = df.loc[[t]]
             sqldf = sqldf.rename({t: str(df.loc["symbol"].iat[0])})
+            # sqldf.insert(0, 'data_ticker', str(df.loc["symbol"].iat[0]))
 
-            sqldf.to_sql(
-                t, self.engine, if_exists="append", index=True, chunksize=500,
-            )
-            # Adds stock ticker as primary key for data table.
-            self.engine.execute(f"ALTER TABLE {t} ADD PRIMARY KEY (index);")
-            # Adds relationship to data table.
-            # c INT NOT NULL
-            # CONSTRAINT y_x_fk_c REFERENCES x (a)   -- if x (a) doens't exist, this will fail!
-            # ON UPDATE CASCADE ON DELETE CASCADE;
-            self.engine.execute(f"ALTER TABLE data ADD COLUMN {t} VARCHAR REFERENCES {t} (index) ON UPDATE CASCADE ON DELETE CASCADE;")
-            # self.engine.execute(f"ALTER TABLE data ADD CONSTRAINT {t} FOREIGN KEY (ticker) REFERENCES {t} (index);")
-            break
-
+            # SQL clean up str.
+            t = self._clean_str(t)
+            if not self._table_exists(t):
+                sqldf.to_sql(
+                    t, self.engine, if_exists="append", index=True, chunksize=500,
+                )
+                # Adds stock ticker as primary key for data table.
+                self.engine.execute(f"ALTER TABLE {t} ADD PRIMARY KEY (index);")
+                self.engine.execute(
+                    f"ALTER TABLE {t} ADD CONSTRAINT fk_data FOREIGN KEY(index) REFERENCES data (ticker);"
+                )
+            else:
+                try:
+                    sqldf.to_sql(
+                        t, self.engine, if_exists="append", index=True, chunksize=500,
+                    )
+                except:
+                    print(f"{str(df.loc['symbol'].iat[0])} for {t} alread exists.")
 
     def write(self, df: pd.DataFrame) -> None:
-        """Writes a specific stock to DB."""
+        """Writes a specific stock to DB.
+
+        :param df: pd.DataFrame containig all fundamental data of stock.
+        """
         try:
             ticker = str(df.loc["symbol"].iat[0])
             reported_currency = str(df.loc["reportedCurrency"].iat[0])
@@ -181,58 +215,11 @@ class JesperSQL:
         # Filling up the data tables.
         self._single_data_pd_to_sql(df)
 
+    def read(self, ticker: str)  -> pd.DataFrame:
+        """Reads a specific stock from DB.
 
-    def _clean_c_headers(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Takes a pandas DataFrame & returns it with cleaned up headers."""
-        df.columns = [
-            x.lower()
-            .replace(" ", "_")
-            .replace("?", "")
-            .replace("-", "_")
-            .replace(r"/", "_")
-            .replace("\\", "_")
-            .replace("%", "")
-            .replace(r")", "")
-            .replace(r"(", "")
-            .replace("$", "")
-            for x in df.columns
-        ]
-        return df
-
-
-    def _adjust_c_dtypes(self, df: pd.DataFrame):
-        """Takes a pandas DataFrame & returns it with adjusted dtypes for its columns."""
-        replacements = {
-            "object": "varchar",
-            "float64": "float",
-            "int64": "int",
-            "datetime64": "timestamp",
-            "timedelta64[ns]": "varchar",
-        }
-        col_str = ", ".join("{} {}")
-
-
-# def csv_to_postgresql(csv_path: str, env: dict):
-#     """."""
-#     assert not all(
-#         k in env.items()
-#         for k in ("PSQL_PORT", "PSQL_HOST", "PSQL_DB_NAME", "PSQL_USER", "PSQL_PW")
-#     ), "keys are missing in .env \['PSQL_PORT', 'PSQL_HOST', 'PSQL_DB_NAME', 'PSQL_USER', 'PSQL_PW'\]."
-
-#     for k, v in env.items():
-#         print(type(v))
-
-#     try:
-#         with psycopg.connect(
-#             dbname=env["PSQL_DB_NAME"],
-#             user=env["PSQL_USER"],
-#             password=env["PSQL_PW"],
-#             host=env["PSQL_HOST"],
-#             port=env["PSQL_PORT"],
-#         ) as conn:
-#             cursor = conn.cursor()
-
-#             cursor.execute("drop table if exists")
-#             print("success.")
-#     except (Exception, psycopg.DatabaseError) as err:
-#         raise err
+        :parma ticker: Stock ticker symbol determining the stock.
+        :returns: pd.DataFrame containig all fundamental data of stock.
+        """
+        pass
+    
