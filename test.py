@@ -1,5 +1,5 @@
 from jesper.sql.pd_to_sql import csv_to_postgresql
-from jesper.sql.db_tables import Stock, Base
+from jesper.sql.db_tables import Stock, base
 import pandas as pd
 from sqlalchemy import MetaData, create_engine
 from sqlalchemy.ext.declarative import declarative_base
@@ -16,7 +16,7 @@ print(sql_str)
 engine = create_engine(env.get_uri_sqlalchemy(), echo=True)
 
 session = Session(engine)
-Base.metadata.create_all(engine)
+base.metadata.create_all(engine)
 # base = declarative_base()
 
 # stock = Stock(ticker="AAPL", fundamental_data=tmp.to_sql(
