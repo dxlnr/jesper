@@ -28,8 +28,8 @@ def main():
 
     # # Calculate evaluation facilitating value based investing.
     # single = ["TGT"]
-    single = ["META", "NVDA"]
-    df = eval_value_based_stocks(single, path_to_csv="data/roic/sp500")
+    single = ["NVDA"]
+    df = eval_value_based_stocks(single, path_to_csv="data")
     # df = eval_value_based_stocks(single, path_to_csv="data/roic/nyse")
     # df = eval_value_based_stocks(
     #     sp500[:100], path_to_csv="data/roic/sp500", save_results_file="iv_sp500_0_100"

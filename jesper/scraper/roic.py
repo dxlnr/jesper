@@ -57,8 +57,10 @@ def _convert_data_to_df(data: List[Dict]) -> pd.DataFrame:
     if df.empty:
         return df
     # Delete various information.
-    if "symbol" in df:
-        del df["symbol"]
+    # if "symbol" in df:
+    #     del df["symbol"]
+    if "cik" in df:
+        del df["cik"]
     if "link" in df:
         del df["link"]
     if "finalLink" in df:
