@@ -163,7 +163,7 @@ class JesperSQL:
         for t in self.tables:
             sqldf = df.loc[[t]]
             sqldf = sqldf.rename({t: str(df.loc["symbol"].iat[0])})
-            sqldf.insert(0, 'param', str(t))
+            sqldf.insert(0, "param", str(t))
 
             # SQL clean up str.
             t = self._clean_str(t)
@@ -226,5 +226,5 @@ class JesperSQL:
                 t_df = t_df.rename({ticker: t})
                 df = pd.concat([df, t_df])
 
-        df = df.drop(columns=['index'])
+        df = df.drop(columns=["index"])
         return df
